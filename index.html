@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script>
         tailwind.config={theme:{extend:{fontFamily:{display:['Space Grotesk','sans-serif'],body:['DM Sans','sans-serif']},colors:{avx:{bg:'#0D1117',surface:'#161B22',card:'#1C2333',border:'#30363D',accent:'#F59E0B','accent-h':'#D97706',text:'#E6EDF3',muted:'#7D8590',success:'#3FB950',error:'#F85149',info:'#58A6FF'}}}}}
+   <script>
+        tailwind.config={theme:{extend:{fontFamily:{display:['Space Grotesk','sans-serif'],body:['DM Sans','sans-serif']},colors:{avx:{bg:'#0D1117',surface:'#161B22',card:'#1C2333',border:'#30363D',accent:'#F59E0B','accent-h':'#D97706',text:'#E6EDF3',muted:'#7D8590',success:'#3FB950',error:'#F85149',info:'#58A6FF'}}}}}
     </script>
     <style>
         *{box-sizing:border-box}body{font-family:'DM Sans',sans-serif;background:#0D1117;color:#E6EDF3;margin:0;overflow:hidden;height:100vh}h1,h2,h3,h4,h5,h6{font-family:'Space Grotesk',sans-serif}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#30363D;border-radius:3px}
@@ -132,7 +134,6 @@
     <div class="flex items-center gap-3 px-4 md:px-6 py-3 bg-avx-surface border-t border-avx-border shrink-0">
         <button onclick="saveSession()" class="flex items-center gap-2 px-5 py-2 bg-avx-accent hover:bg-avx-accent-h text-avx-bg font-semibold rounded-lg text-sm transition-all btn-glow"><i class="fa-solid fa-floppy-disk"></i>Assisted</button>
         <button onclick="openIncidentModal()" class="flex items-center gap-2 px-4 py-2 border border-avx-border text-avx-muted hover:text-avx-error hover:border-avx-error/40 rounded-lg text-sm transition-all"><i class="fa-solid fa-triangle-exclamation"></i>Report Incident</button>
-	<button onclick="toggleAI()" id="ai-toggle-btn" class="flex items-center gap-2 px-4 py-2 border border-avx-border text-avx-muted hover:text-avx-info hover:border-avx-info/40 rounded-lg text-sm transition-all"><i class="fa-solid fa-bolt"></i><span id="ai-toggle-label">Gemini: OFF</span></button>
         <button onclick="clearChat()" class="flex items-center gap-2 px-4 py-2 border border-avx-border text-avx-muted hover:text-avx-text hover:border-avx-text/30 rounded-lg text-sm transition-all ml-auto"><i class="fa-solid fa-rotate-right"></i>New Session</button>
     </div>
 </div>
@@ -472,33 +473,14 @@ function handleChatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();se
 async function sendMessage(){
     const input=document.getElementById('chat-input'),text=input.value.trim();
     if(!text||!S.currentSessionId)return;input.value='';input.style.height='auto';
-
-    // Insert user message into DB
     try{const{data,error}=await db.from('messages').insert({session_id:S.currentSessionId,user_id:S.profile.id,sender_role:'user',content:text}).select('id').single();if(error)throw error;S.renderedMsgIds.add(data.id);renderMsg({role:'user',message:text,time:now(),id:data.id});}
     catch(e){showToast('Failed to send: '+e.message,'error');return;}
-
-    // Update session metadata
     const u={};const on=document.getElementById('ct-order').value.trim(),ch=S.channel,ps=document.getElementById('ct-site').value;if(on)u.order_number=on;if(ch)u.channel=ch;if(ps)u.product_site=ps;if(Object.keys(u).length>0)db.from('sessions').update(u).eq('id',S.currentSessionId).then(()=>{});
-
     showTyping();
     setTimeout(async()=>{
-        hideTyping();
-
-        // Try Gemini first if enabled, then local KB, then smart fallback
-        let answer = null;
-        if (aiEnabled) {
-            answer = await queryAI(text, []);
-        }
-        if (!answer) {
-            answer = await queryKB(text);
-        }
-        if (!answer) {
-            answer = generateSmartFallback(text);
-        }
-
-        // Insert bot response into DB
-        try{const{data,error}=await db.from('messages').insert({session_id:S.currentSessionId,user_id:S.profile.id,sender_role:'bot',content:answer}).select('id').single();if(error)throw error;S.renderedMsgIds.add(data.id);renderMsg({role:'bot',message:answer,time:now(),id:data.id});}
-        catch(e){renderMsg({role:'bot',message:answer,time:now()});}
+        hideTyping();const reply=await queryKB(text);const fb=generateSmartFallback(text);const ans=reply||fb;
+        try{const{data,error}=await db.from('messages').insert({session_id:S.currentSessionId,user_id:S.profile.id,sender_role:'bot',content:ans}).select('id').single();if(error)throw error;S.renderedMsgIds.add(data.id);renderMsg({role:'bot',message:ans,time:now(),id:data.id});}
+        catch(e){renderMsg({role:'bot',message:ans,time:now()});}
     },600+Math.random()*800);
 }
 
@@ -580,88 +562,6 @@ function generateSmartFallback(text){
     // Generic smart fallback
     return "I don't have a specific match for that, but I can help with:<br><br>• <strong>Product specs</strong> — Ask about any product (e.g., 'business cards', 'banners', 'stickers')<br>• <strong>File setup</strong> — Resolution, bleed, CMYK, fonts, foils, white ink<br>• <strong>Materials</strong> — Paper stocks, finishes, lamination, alternatives<br>• <strong>Site navigation</strong> — Ask 'where do I find [product]'<br>• <strong>Shipping</strong> — Turnaround and delivery times<br><br>Try being more specific, or use <strong>Quick Links</strong> (globe icon) to browse product sites directly.";
 }
-let aiEnabled = false;
-
-function toggleAI() {
-    aiEnabled = !aiEnabled;
-    const label = document.getElementById('ai-toggle-label');
-    const btn = document.getElementById('ai-toggle-btn');
-    if (aiEnabled) {
-        label.textContent = 'Gemini: ON';
-        btn.classList.remove('border-avx-border', 'text-avx-muted');
-        btn.classList.add('border-avx-info/40', 'text-avx-info');
-        showToast('Gemini AI enabled — free, powered by Google', 'success');
-    } else {
-        label.textContent = 'Gemini: OFF';
-        btn.classList.remove('border-avx-info/40', 'text-avx-info');
-        btn.classList.add('border-avx-border', 'text-avx-muted');
-        showToast('Gemini AI disabled — using local knowledge base', 'info');
-    }
-}
-
-async function queryAI(text, chatHistory) {
-    if (!db) return null;
-    try {
-        const messages = chatHistory.slice(-10).map(m => ({
-            role: m.role === 'user' ? 'user' : 'assistant',
-            content: m.role === 'user' ? (m.content || m.message) : (m.message || m.content)
-        }));
-        const lastUserMsg = messages.filter(m => m.role === 'user').pop();
-        if (!lastUserMsg || lastUserMsg.content !== text) {
-            messages.push({ role: 'user', content: text });
-        }
-        const { data, error } = await db.functions.invoke('ai-chat', { messages });
-        if (error) throw error;
-        return data.reply || null;
-    } catch (e) {
-        console.error('AI query error:', e);
-        return null;
-    }
-}
-
-// ==============================================
-// GEMINI AI INTEGRATION
-// ==============================================
-let aiEnabled = false;
-
-function toggleAI() {
-    aiEnabled = !aiEnabled;
-    const label = document.getElementById('ai-toggle-label');
-    const btn = document.getElementById('ai-toggle-btn');
-    if (aiEnabled) {
-        label.textContent = 'Gemini: ON';
-        btn.classList.remove('border-avx-border', 'text-avx-muted');
-        btn.classList.add('border-avx-info/40', 'text-avx-info');
-        showToast('Gemini AI enabled — free, powered by Google', 'success');
-    } else {
-        label.textContent = 'Gemini: OFF';
-        btn.classList.remove('border-avx-info/40', 'text-avx-info');
-        btn.classList.add('border-avx-border', 'text-avx-muted');
-        showToast('Gemini AI disabled — using local knowledge base', 'info');
-    }
-}
-
-async function queryAI(text, chatHistory) {
-    if (!db) return null;
-    try {
-        const messages = chatHistory.slice(-10).map(m => ({
-            role: m.role === 'user' ? 'user' : 'assistant',
-            content: m.role === 'user' ? (m.content || m.message) : (m.message || m.content)
-        }));
-        const lastUserMsg = messages.filter(m => m.role === 'user').pop();
-        if (!lastUserMsg || lastUserMsg.content !== text) {
-            messages.push({ role: 'user', content: text });
-        }
-        const { data, error } = await db.functions.invoke('ai-chat', { messages });
-        if (error) throw error;
-        return data.reply || null;
-    } catch (e) {
-        console.error('AI query error:', e);
-        return null;
-    }
-}
-
-// ==============================================
 function setChannel(ch){S.channel=ch;document.querySelectorAll('.ch-btn').forEach(b=>{const a=b.getAttribute('data-ch')===ch;b.classList.toggle('bg-avx-accent/15',a);b.classList.toggle('border-avx-accent',a);b.classList.toggle('text-avx-accent',a);});}
 
 // ==============================================
