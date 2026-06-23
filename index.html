@@ -375,10 +375,51 @@ async function loadKB(){
 }
 
 async function queryKB(text){
-    const entries=await loadKB();const lower=text.toLowerCase();
+    const entries=await loadKB();
+    if(!entries||!entries.length)return null;
+    const lower=text.toLowerCase().replace(/[^a-z0-9\s\/\-\.\#]/g,'');
+    const words=lower.split(/\s+/).filter(w=>w.length>1);
     let best=null,bestScore=0;
-    for(const entry of entries){let score=0;for(const kw of entry.keywords){if(lower.includes(kw.toLowerCase()))score++;}if(score>bestScore){bestScore=score;best=entry;}}
-    if(best&&bestScore>0)return best.answer;return null;
+
+    for(const entry of entries){
+        let score=0;
+
+        // Method 1: Full keyword match (highest weight)
+        for(const kw of entry.keywords){
+            const kwLower=kw.toLowerCase();
+            if(lower.includes(kwLower)){
+                // Longer keyword matches score higher
+                score += kwLower.length;
+            }
+        }
+
+        // Method 2: Partial/substring match (medium weight)
+        for(const kw of entry.keywords){
+            const kwLower=kw.toLowerCase();
+            if(kwLower.length>3){
+                for(const word of words){
+                    if(word.length>3 && (word.includes(kwLower)||kwLower.includes(word))){
+                        score += Math.min(word.length,kwLower.length)*0.4;
+                    }
+                }
+            }
+        }
+
+        // Method 3: Question text match (lower weight)
+        const qWords=entry.question.toLowerCase().split(/\s+/).filter(w=>w.length>3);
+        for(const qw of qWords){
+            for(const word of words){
+                if(word===qw)score+=2;
+                else if(word.includes(qw)||qw.includes(word))score+=0.8;
+            }
+        }
+
+        if(score>bestScore){bestScore=score;best=entry;}
+    }
+
+    // Minimum threshold to avoid bad matches
+    if(best&&bestScore>1.5)return best.answer;
+    return null;
 }
 
 // ==============================================
@@ -435,7 +476,7 @@ async function sendMessage(){
     const u={};const on=document.getElementById('ct-order').value.trim(),ch=S.channel,ps=document.getElementById('ct-site').value;if(on)u.order_number=on;if(ch)u.channel=ch;if(ps)u.product_site=ps;if(Object.keys(u).length>0)db.from('sessions').update(u).eq('id',S.currentSessionId).then(()=>{});
     showTyping();
     setTimeout(async()=>{
-        hideTyping();const reply=await queryKB(text);const fb="I'm not sure I have specific info on that. Could you provide more details? I can help with printing standards, product locations, production guidelines, or customer queries.";const ans=reply||fb;
+        hideTyping();const reply=await queryKB(text);const fb=generateSmartFallback(text);const ans=reply||fb;
         try{const{data,error}=await db.from('messages').insert({session_id:S.currentSessionId,user_id:S.profile.id,sender_role:'bot',content:ans}).select('id').single();if(error)throw error;S.renderedMsgIds.add(data.id);renderMsg({role:'bot',message:ans,time:now(),id:data.id});}
         catch(e){renderMsg({role:'bot',message:ans,time:now()});}
     },600+Math.random()*800);
@@ -499,7 +540,26 @@ async function loadQuickLinks(){
         `).join('');
     }catch(e){content.innerHTML=`<p class="text-avx-error text-sm text-center py-8">${e.message}</p>`;}
 }
+function generateSmartFallback(text){
+    const lower=text.toLowerCase();
+    // Detect intent from partial keywords and give contextual fallback
+    const intents=[
+        {kw:['order','track','status','where','when','shipping'],msg:"For order tracking, please provide the <strong>order number</strong> so I can look it up. You can also check order status directly on the product website. Use <strong>Quick Links</strong> (globe icon) to access the site's order tracking page."},
+        {kw:['price','cost','how much','quote','pricing','rate','cheap','expensive','budget'],msg:"For accurate pricing, I need: <strong>1)</strong> Product type, <strong>2)</strong> Quantity, <strong>3)</strong> Size, <strong>4)</strong> Paper/stock preference, <strong>5)</strong> Finish (lamination, spot UV, etc.), <strong>6)</strong> Turnaround. You can also use <strong>Custom Quote</strong> on any site for non-standard orders — find it in <strong>Quick Links</strong>."},
+        {kw:['file','upload','submit','send','design','artwork'],msg:"For file submission: Use <strong>PDF/X-1a or PDF/X-4</strong> format. Ensure <strong>300 DPI</strong>, <strong>CMYK</strong>, <strong>0.125\" bleed</strong>, and <strong>all fonts outlined</strong>. See the full preflight checklist — just ask me about 'preflight'."},
+        {kw:['complaint','problem','wrong','error','bad','poor','defective','damage','miss'],msg:"For quality issues: <strong>1)</strong> Get the order number, <strong>2)</strong> Collect photos of the defect, <strong>3)</strong> Note the specific issue. Use the <strong>Report Incident</strong> button to file this formally so the production team can address it."},
+        {kw:['template','design','need design','no design','blank','start from scratch'],msg:"Design resources are available on most sites. Open <strong>Quick Links</strong> (globe icon) → select the site → look under <strong>Resources → Templates</strong>. Some sites also offer professional <strong>Design Services</strong> and online <strong>Product Builders</strong>."},
+        {kw:['return','refund','money back','cancel','cancelation'],msg:"Returns and refunds vary by site. Generally: production defects qualify for reprint/refund, but customer-approved content errors do not. Open <strong>Quick Links</strong> → select the site → <strong>Legal → Returns & Refunds</strong> for the specific policy. Use <strong>Report Incident</strong> to log the issue formally."},
+        {kw:['contact','phone','email','talk to','speak to','reach','support','help desk'],msg:"Use <strong>Quick Links</strong> (globe icon) → select the site → <strong>Contact</strong> to find their phone, email, and chat options. Each site has their own support team."},
+    ];
 
+    for(const intent of intents){
+        if(intent.kw.some(k=>lower.includes(k)))return intent.msg;
+    }
+
+    // Generic smart fallback
+    return "I don't have a specific match for that, but I can help with:<br><br>• <strong>Product specs</strong> — Ask about any product (e.g., 'business cards', 'banners', 'stickers')<br>• <strong>File setup</strong> — Resolution, bleed, CMYK, fonts, foils, white ink<br>• <strong>Materials</strong> — Paper stocks, finishes, lamination, alternatives<br>• <strong>Site navigation</strong> — Ask 'where do I find [product]'<br>• <strong>Shipping</strong> — Turnaround and delivery times<br><br>Try being more specific, or use <strong>Quick Links</strong> (globe icon) to browse product sites directly.";
+}
 function setChannel(ch){S.channel=ch;document.querySelectorAll('.ch-btn').forEach(b=>{const a=b.getAttribute('data-ch')===ch;b.classList.toggle('bg-avx-accent/15',a);b.classList.toggle('border-avx-accent',a);b.classList.toggle('text-avx-accent',a);});}
 
 // ==============================================
