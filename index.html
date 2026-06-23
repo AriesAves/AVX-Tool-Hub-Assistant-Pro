@@ -136,6 +136,18 @@
     </div>
 </div>
 
+<!-- QUICK LINKS PANEL -->
+<div id="quick-links-panel" class="hidden fixed top-0 right-0 h-full w-80 bg-avx-surface border-l border-avx-border z-30 flex flex-col shadow-2xl">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-avx-border shrink-0">
+        <h3 class="text-sm font-display font-semibold text-avx-text"><i class="fa-solid fa-globe text-avx-accent mr-2"></i>Quick Links</h3>
+        <button onclick="toggleQuickLinks()" class="w-7 h-7 rounded-lg hover:bg-avx-card flex items-center justify-center text-avx-muted hover:text-avx-text transition-all"><i class="fa-solid fa-xmark text-sm"></i></button>
+    </div>
+    <div class="px-3 py-2 border-b border-avx-border shrink-0">
+        <div class="relative"><select id="ql-site-filter" onchange="loadQuickLinks()" class="w-full bg-avx-card border border-avx-border rounded-lg px-3 py-1.5 text-avx-text text-xs appearance-none cursor-pointer pr-7"><option value="">All Sites</option></select><i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-avx-muted text-[9px] pointer-events-none"></i></div>
+    </div>
+    <div id="ql-content" class="flex-1 overflow-y-auto p-3 space-y-3"></div>
+</div>
+
 <!-- ==================== SUPERVISOR SCREEN ==================== -->
 <div id="sup-screen" class="hidden w-full h-full flex flex-col">
     <header class="flex items-center justify-between px-4 md:px-6 py-3 bg-avx-surface border-b border-avx-border shrink-0">
@@ -169,6 +181,7 @@
         <main id="sup-content" class="flex-1 overflow-y-auto p-4 md:p-6 bg-avx-bg"></main>
     </div>
 </div>
+
 
 <!-- ==================== CONVERSATION MODAL ==================== -->
 <div id="conv-modal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
@@ -426,6 +439,65 @@ async function sendMessage(){
         try{const{data,error}=await db.from('messages').insert({session_id:S.currentSessionId,user_id:S.profile.id,sender_role:'bot',content:ans}).select('id').single();if(error)throw error;S.renderedMsgIds.add(data.id);renderMsg({role:'bot',message:ans,time:now(),id:data.id});}
         catch(e){renderMsg({role:'bot',message:ans,time:now()});}
     },600+Math.random()*800);
+}
+
+// ==============================================
+// QUICK LINKS PANEL
+// ==============================================
+let qlCache=null,qlCacheTime=0;const QL_CACHE_TTL=120000;
+
+async function toggleQuickLinks(){
+    const panel=document.getElementById('quick-links-panel');
+    panel.classList.toggle('hidden');
+    if(!panel.classList.contains('hidden'))loadQuickLinks();
+}
+
+async function loadQuickLinks(){
+    const siteFilter=document.getElementById('ql-site-filter').value;
+    const content=document.getElementById('ql-content');
+    if(!db){content.innerHTML='<p class="text-avx-muted text-sm text-center py-8">No database connection</p>';return;}
+
+    // Populate site filter if empty
+    if(document.getElementById('ql-site-filter').options.length<=1){
+        const sites=await loadSites();
+        const sel=document.getElementById('ql-site-filter');
+        sel.innerHTML='<option value="">All Sites</option>'+sites.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');
+        if(siteFilter)sel.value=siteFilter;
+    }
+
+    content.innerHTML='<div class="flex items-center gap-2 text-avx-muted text-sm py-8 justify-center"><i class="fa-solid fa-spinner fa-spin"></i></div>';
+
+    try{
+        let q=db.from('site_links').select('*').order('sort_order',{ascending:true});
+        if(siteFilter)q=q.eq('site_name',siteFilter);
+        const{data:links,error}=await q;
+        if(error)throw error;
+        if(!links||!links.length){content.innerHTML='<p class="text-avx-muted text-sm text-center py-8">No links found</p>';return;}
+
+        // Group by site then by category
+        const bySite={};
+        links.forEach(l=>{if(!bySite[l.site_name])bySite[l.site_name]={};if(!bySite[l.site_name][l.category])bySite[l.site_name][l.category]=[];bySite[l.site_name][l.category].push(l);});
+
+        const catIcons={Products:'fa-box',Resources:'fa-book-open',Legal:'fa-scale-balanced',Contact:'fa-phone'};
+        const catColors={Products:'text-avx-accent',Resources:'text-avx-info',Legal:'text-avx-muted',Contact:'text-avx-success'};
+
+        content.innerHTML=Object.entries(bySite).map(([site,cats])=>`
+            <div class="mb-4">
+                <h4 class="text-xs font-display font-bold text-avx-text mb-2 uppercase tracking-wider">${esc(site)}</h4>
+                ${Object.entries(cats).map(([cat,items])=>`
+                    <div class="mb-2">
+                        <p class="text-[10px] font-medium ${catColors[cat]||'text-avx-muted'} mb-1 uppercase tracking-wider"><i class="fa-solid ${catIcons[cat]||'fa-folder'} mr-1"></i>${cat}</p>
+                        <div class="space-y-0.5">
+                            ${items.map(item=>{
+                                if(item.url==='#')return`<div class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-avx-muted/60"><i class="fa-solid fa-link text-[8px]"></i>${esc(item.label)}</div>`;
+                                return`<a href="${esc(item.url)}" target="_blank" rel="noopener" class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-avx-text hover:bg-avx-accent/10 hover:text-avx-accent transition-all group"><i class="fa-solid fa-arrow-up-right-from-square text-[8px] text-avx-muted group-hover:text-avx-accent"></i>${esc(item.label)}</a>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `).join('');
+    }catch(e){content.innerHTML=`<p class="text-avx-error text-sm text-center py-8">${e.message}</p>`;}
 }
 
 function setChannel(ch){S.channel=ch;document.querySelectorAll('.ch-btn').forEach(b=>{const a=b.getAttribute('data-ch')===ch;b.classList.toggle('bg-avx-accent/15',a);b.classList.toggle('border-avx-accent',a);b.classList.toggle('text-avx-accent',a);});}
