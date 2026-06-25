@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AVX Tool HUB Assistant PRO</title>
@@ -757,6 +760,11 @@ document.getElementById('site-modal').addEventListener('click',function(e){if(e.
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeConvModal();closeIncidentModal();closeKbModal();closeSiteModal();document.getElementById('confirm-modal').classList.add('hidden');document.getElementById('import-modal').classList.add('hidden');}});
 
 (async function init(){if(!db){showToast('Supabase not loaded','error');return;}try{const{data:{session}}=await db.auth.getSession();if(session&&session.user){S.authUser=session.user;await loadProfile(session.user);}}catch(e){console.error('Init error:',e);}document.getElementById('li-email').focus();})();
+</script>
+    <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/AVX-Tool-Hub-Assistant-Pro/sw.js');
+  }
 </script>
 </body>
 </html>
