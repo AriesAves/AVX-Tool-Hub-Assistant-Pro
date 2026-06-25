@@ -50,28 +50,13 @@
         .status-open{background:#F85149}.status-progress{background:#F59E0B}.status-resolved{background:#3FB950}
         .kb-cat-tag{font-size:.65rem;padding:2px 8px;border-radius:9999px;font-weight:500}
         .site-card{transition:all .2s}.site-card:hover{border-color:rgba(245,158,11,.3);transform:translateY(-1px)}
+        /* Manual refresh button styles */
         .manual-refresh-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);border-radius:8px;color:#F59E0B;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
         .manual-refresh-btn:hover{background:rgba(245,158,11,.2);border-color:rgba(245,158,11,.4)}
         .manual-refresh-btn:active{transform:scale(.96)}
         .manual-refresh-btn .spin-icon{transition:transform .5s ease}
         .manual-refresh-btn.spinning .spin-icon{transform:rotate(360deg)}
         .refresh-timestamp{font-size:10px;color:#7D8590;display:flex;align-items:center;gap:4px;white-space:nowrap}
-        /* Smart response suggestion chips */
-        .sugg-section{margin-top:10px;padding-top:10px;border-top:1px solid rgba(48,54,61,.6)}
-        .sugg-label{font-size:11px;color:#7D8590;margin-bottom:6px;display:flex;align-items:center;gap:5px}
-        .sugg-chips{display:flex;flex-wrap:wrap;gap:5px}
-        .sugg-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;border:1px solid rgba(245,158,11,.2);background:rgba(245,158,11,.06);color:#F59E0B}
-        .sugg-chip:hover{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.4);transform:translateY(-1px)}
-        .sugg-chip.blue{border-color:rgba(88,166,255,.2);background:rgba(88,166,255,.06);color:#58A6FF}
-        .sugg-chip.blue:hover{background:rgba(88,166,255,.15);border-color:rgba(88,166,255,.4)}
-        .sugg-chip.green{border-color:rgba(63,185,80,.2);background:rgba(63,185,80,.06);color:#3FB950}
-        .sugg-chip.green:hover{background:rgba(63,185,80,.15);border-color:rgba(63,185,80,.4)}
-        .sugg-chip i{font-size:9px}
-        .alt-section{margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(88,166,255,.05);border:1px solid rgba(88,166,255,.1)}
-        .alt-section p{font-size:11px;color:#58A6FF;margin-bottom:5px;font-weight:500}
-        .resp-body p{margin-bottom:6px}.resp-body p:last-child{margin-bottom:0}
-        .resp-body strong{color:#F59E0B;font-weight:600}
-        .resp-body ul{margin:4px 0 8px 16px;list-style:disc}.resp-body li{margin-bottom:3px;font-size:13px}
         @media(max-width:768px){#sup-sidebar{position:fixed;left:-260px;top:0;bottom:0;z-index:40;transition:left .3s}#sup-sidebar.open{left:0}#sup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:35}#sup-sidebar.open~#sup-overlay{display:block}}
     </style>
 </head>
@@ -213,6 +198,7 @@
     </div>
 </div>
 
+
 <!-- ==================== CONVERSATION MODAL ==================== -->
 <div id="conv-modal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
     <div class="bg-avx-surface border border-avx-border rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col page-enter shadow-2xl">
@@ -303,7 +289,9 @@ try{const{createClient}=supabase;db=createClient(SUPABASE_URL,SUPABASE_ANON_KEY)
 // ==============================================
 const S={profile:null,authUser:null,currentSessionId:null,channel:'',supView:'home',renderedMsgIds:new Set(),convRenderedIds:new Set()};
 let msgChannel=null,convChannel=null;
-let refreshCount=0;
+// REMOVED: supFeedChannel — no more auto supervisor feed
+// REMOVED: clockInterval — no more auto clock
+let refreshCount=0; // track manual refresh count
 let kbCache=null,kbCacheTime=0;const KB_CACHE_TTL=60000;
 let sitesCache=null,sitesCacheTime=0;const SITES_CACHE_TTL=120000;
 
@@ -329,25 +317,38 @@ function showToast(msg,type='info'){
 }
 function showConfirm(title,msg,onOk){const m=document.getElementById('confirm-modal');document.getElementById('confirm-title').textContent=title;document.getElementById('confirm-msg').textContent=msg;m.classList.remove('hidden');document.getElementById('confirm-ok').onclick=()=>{m.classList.add('hidden');onOk();};}
 
+// ==============================================
+// CHANGED: Clock is now manual-only (no setInterval)
+// ==============================================
 function updateClock(){
     const s=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+'  '+new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     ['ct-datetime','sup-datetime'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=s;});
 }
-function startClock(){updateClock();}
-function stopClock(){}
+function startClock(){updateClock();} // just set once, no interval
+function stopClock(){} // nothing to stop
 
+// ==============================================
+// CHANGED: Manual Refresh — the ONLY way to update data
+// ==============================================
 function manualRefresh(){
     const btn=document.getElementById('ct-refresh-btn')||document.getElementById('sup-refresh-btn');
     if(btn){btn.classList.add('spinning');btn.disabled=true;}
-    refreshCount++;updateClock();
+    refreshCount++;
+    updateClock();
+    // Update timestamp displays
     const ts=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     ['ct-refresh-ts','sup-refresh-ts'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=`<i class="fa-regular fa-clock"></i> Updated: ${ts} (#${refreshCount})`;});
+    // Invalidate caches so next data fetch gets fresh data
     kbCache=null;kbCacheTime=0;sitesCache=null;sitesCacheTime=0;
+    // Refresh sites dropdown if on CT screen
     if(!document.getElementById('ct-screen').classList.contains('hidden')){loadSitesDropdown();}
+    // Refresh supervisor view if on sup screen
     if(!document.getElementById('sup-screen').classList.contains('hidden')){loadActiveCount();switchSupView(S.supView);}
+    // Spin animation done
     setTimeout(()=>{if(btn){btn.classList.remove('spinning');btn.disabled=false;}showToast(`Data refreshed (#${refreshCount})`,'success');},350);
 }
 
+// ==============================================
 function statusBadge(st){const m={open:['status-open','Open'],in_progress:['status-progress','In Progress'],resolved:['status-resolved','Resolved']};const[c,t]=m[st]||['status-open',st];return`<span class="inline-flex items-center gap-1.5 text-xs font-medium"><span class="status-dot ${c}"></span>${t}</span>`;}
 
 // ==============================================
@@ -390,6 +391,7 @@ async function loadProfile(user){
         document.getElementById('auth-screen').classList.add('hidden');startClock();
         if(profile.role==='supervisor'){
             document.getElementById('sup-screen').classList.remove('hidden');document.getElementById('sup-welcome').textContent=`Welcome, ${profile.name}`;switchSupView('home');loadActiveCount();
+            // CHANGED: Removed subscribeSupFeed() — no auto-refresh
         }else{
             document.getElementById('ct-screen').classList.remove('hidden');document.getElementById('ct-welcome').textContent=`Welcome, ${profile.name}`;document.getElementById('ct-role-label').textContent=cap(profile.role)+(profile.designation?' — '+profile.designation:'');
             await loadSitesDropdown();await createNewSession();
@@ -399,21 +401,24 @@ async function loadProfile(user){
 }
 
 // ==============================================
-// 5. PRODUCT SITES
+// 5. PRODUCT SITES — Load from DB
 // ==============================================
 async function loadSites(){
     if(sitesCache&&Date.now()-sitesCacheTime<SITES_CACHE_TTL)return sitesCache;
     try{const{data,error}=await db.from('product_sites').select('*').eq('active',true).order('sort_order',{ascending:true});if(error)throw error;sitesCache=data||[];sitesCacheTime=Date.now();return sitesCache;}
     catch(e){console.error('Sites load error:',e);return sitesCache||[];}
 }
+
 async function loadSitesDropdown(){
-    const sites=await loadSites();const sel=document.getElementById('ct-site');const cv=sel.value;
+    const sites=await loadSites();
+    const sel=document.getElementById('ct-site');
+    const currentVal=sel.value;
     sel.innerHTML='<option value="">Select site</option>'+sites.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');
-    if(cv)sel.value=cv;
+    if(currentVal)sel.value=currentVal;
 }
 
 // ==============================================
-// 6. KNOWLEDGE BASE — Enhanced Smart Query Engine
+// 6. KNOWLEDGE BASE — Load & Query
 // ==============================================
 async function loadKB(){
     if(kbCache&&Date.now()-kbCacheTime<KB_CACHE_TTL)return kbCache;
@@ -421,408 +426,22 @@ async function loadKB(){
     catch(e){console.error('KB load error:',e);return kbCache||[];}
 }
 
-// --- Category relationship map for smart suggestions ---
-const CAT_RELATIONS={
-    color:['design','file','paper','print','resolution','cmyk','rgb','pantone'],
-    paper:['color','finishing','binding','material','stock','weight','coating','lamination'],
-    shipping:['delivery','turnaround','rush','order','tracking','transit','fedex','ups'],
-    file:['design','color','resolution','format','dpi','bleed','trim','margin','upload','pdf'],
-    pricing:['discount','bulk','quote','order','cost','rate','wholesale'],
-    design:['file','color','template','artwork','bleed','trim','layout'],
-    finishing:['paper','binding','lamination','coating','fold','cut','uv','spot'],
-    binding:['finishing','paper','booklet','catalog','saddle','perfect','coil'],
-    resolution:['file','dpi','quality','print','image','megapixel'],
-    turnaround:['shipping','rush','production','order','expedite','time'],
-    template:['design','file','format','artwork','layout','size'],
-    artwork:['design','file','color','template','upload','proof'],
-    lamination:['finishing','coating','paper','protection','matte','glossy'],
-    coating:['finishing','lamination','paper','finish','aqueous','uv'],
-    bleed:['file','trim','margin','design','safety','template'],
-    trim:['bleed','file','size','cut','finish','die'],
-    fold:['binding','finishing','brochure','paper','accordion','gate'],
-    bulk:['pricing','discount','order','wholesale','quantity'],
-    discount:['pricing','bulk','promo','offer','coupon'],
-    rush:['turnaround','shipping','expedite','production','fast'],
-    envelope:['paper','printing','mailing','stationery','size'],
-    sticker:['material','cut','lamination','printing','die','vinyl'],
-    banner:['material','size','resolution','outdoor','mesh','vinyl'],
-    'business card':['paper','finish','coating','bleed','stock','spot uv'],
-    flyer:['paper','size','fold','bleed','printing'],
-    brochure:['fold','paper','binding','bleed','tri-fold'],
-    postcard:['paper','size','mailing','coating','stamp'],
-    poster:['resolution','size','paper','coating','large format'],
-    label:['material','cut','sticker','printing','roll','sheet'],
-    packaging:['material','design','finish','printing','box','cardboard'],
-    booklet:['binding','fold','paper','page','saddle stitch'],
-    catalog:['binding','paper','page','finish','product'],
-    product:['pricing','size','material','finish','specification'],
-    order:['shipping','turnaround','pricing','tracking','status','reorder'],
-    delivery:['shipping','turnaround','tracking','time','address'],
-    proof:['design','file','approval','print','check'],
-    print:['color','paper','resolution','quality','production'],
-};
-
-// --- Intent detection ---
-function detectIntent(text){
-    const l=text.toLowerCase();
-    if(/^(hi|hello|hey|good\s?(morning|afternoon|evening)|howdy|greetings|what'?s up)/.test(l))return'greeting';
-    if(/\b(price|cost|how much|rate|charge|quote|pricing|afford|expensive|cheap|budget)\b/i.test(l))return'pricing';
-    if(/\b(ship|deliver|track|transit|fedex|ups|usps|dhl|freight|mailing| postage)\b/i.test(l))return'shipping';
-    if(/\b(file|upload|pdf|ai|eps|format|dpi|resolution|bleed|trim|margin|export|save|artwork)\b/i.test(l))return'file_prep';
-    if(/\b(paper|stock|cardstock|weight|thickness|finish|matte|glossy|uncoated|text\s?weight|cover\s?weight)\b/i.test(l))return'material';
-    if(/\b(color|cmyk|rgb|pantone|spot\s?color|print\s?color|color\s?mode|color\s?space)\b/i.test(l))return'color';
-    if(/\b(size|dimension|width|height|large|small|a4|letter|legal|tabloid|custom\s?size)\b/i.test(l))return'sizing';
-    if(/\b(turnaround|how long|fast|rush|expedite|production\s?time|lead\s?time|processing)\b/i.test(l))return'turnaround';
-    if(/\b(reorder|order\s?again|repeat\s?order|same\s?as)\b/i.test(l))return'reorder';
-    if(/\b(quality|defect|issue|problem|wrong|damaged|smudge|misalign|crooked|blurry)\b/i.test(l))return'quality';
-    if(/\b(cancel|refund|return|money\s?back|complaint|unsatisfied)\b/i.test(l))return'complaint';
-    if(/\b(discount|promo|coupon|offer|deal|sale|special)\b/i.test(l))return'discount';
-    if(/\b(template|design\s?template|layout|blank|start\s?from)\b/i.test(l))return'template';
-    if(/\b(proof|approval|review|check|verify|confirm\s?design)\b/i.test(l))return'proof';
-    if(/\b(fold|folding|bi.?fold|tri.?fold|accordion|gate\s?fold)\b/i.test(l))return'folding';
-    if(/\b(bind|binding|saddle|perfect\s?bind|coil|spiral|stitch)\b/i.test(l))return'binding';
-    if(/\b(laminate|lamination|coating|uv\s?coat|aqueous|varnish)\b/i.test(l))return'coating';
-    if(/\b(business\s?card|businesscard|b.?card)\b/i.test(l))return'product_bc';
-    if(/\b(flyer|flier|handout)\b/i.test(l))return'product_flyer';
-    if(/\b(brochure|pamphlet|booklet)\b/i.test(l))return'product_brochure';
-    if(/\b(banner|signage|sign)\b/i.test(l))return'product_banner';
-    if(/\b(sticker|label|decal)\b/i.test(l))return'product_sticker';
-    if(/\b(postcard|mail\s?card)\b/i.test(l))return'product_postcard';
-    if(/\b(poster|large\s?format|wide)\b/i.test(l))return'product_poster';
-    if(/\b(envelope|letterhead|stationery)\b/i.test(l))return'product_stationery';
-    if(/\b(package|packaging|box|carton)\b/i.test(l))return'product_packaging';
-    if(/\b(how|what|where|when|can you|could you|please|help|tell me|explain|guide)\b/i.test(l))return'question';
-    return'general';
-}
-
-// --- Smart KB scoring engine ---
-async function queryKBSmart(text){
+async function queryKB(text){
     const entries=await loadKB();
-    const result={best:null,alternatives:[],related:[],allScored:[],intent:detectIntent(text)};
-    if(!entries||!entries.length)return result;
-
+    if(!entries||!entries.length)return null;
     const lower=text.toLowerCase().replace(/[^a-z0-9\s\/\-\.\#]/g,'');
     const words=lower.split(/\s+/).filter(w=>w.length>1);
-
-    // Score every entry
-    result.allScored=entries.map(entry=>{
-        let score=0;
-        const kwList=(entry.keywords||[]).map(k=>k.toLowerCase());
-        const qLower=(entry.question||'').toLowerCase();
-        const catLower=(entry.category||'').toLowerCase();
-        const qWords=qLower.split(/\s+/).filter(w=>w.length>2);
-
-        // Exact keyword containment in user text (highest weight)
-        for(const kw of kwList){
-            if(lower.includes(kw))score+=kw.length*1.2;
-        }
-        // Partial/substring match (medium weight)
-        for(const kw of kwList){
-            if(kw.length>3){
-                for(const word of words){
-                    if(word.length>3&&(word.includes(kw)||kw.includes(word)))score+=Math.min(word.length,kw.length)*0.5;
-                }
-            }
-        }
-        // Question word overlap (lower weight)
-        for(const qw of qWords){
-            for(const word of words){
-                if(word===qw)score+=2.5;
-                else if(word.length>3&&qw.length>3&&(word.includes(qw)||qw.includes(word)))score+=1;
-            }
-        }
-        // Category match bonus
-        const userWordsLower=words.join(' ');
-        if(catLower.length>2&&userWordsLower.includes(catLower))score+=3;
-
-        // Intent-category alignment bonus
-        const intentCatMap={color:'color',material:'paper',file_prep:'file',shipping:'shipping',pricing:'pricing',sizing:'size',turnaround:'turnaround',folding:'fold',binding:'binding',coating:'lamination',product_bc:'business card',product_flyer:'flyer',product_brochure:'brochure',product_banner:'banner',product_sticker:'sticker',product_postcard:'postcard',product_poster:'poster',product_stationery:'envelope',product_packaging:'packaging',template:'template',proof:'proof',discount:'discount'};
-        const mappedCat=intentCatMap[result.intent];
-        if(mappedCat&&catLower.includes(mappedCat))score+=4;
-
-        return{entry,score};
-    });
-
-    result.allScored.sort((a,b)=>b.score-a.score);
-
-    // Best match (above threshold)
-    const top=result.allScored[0];
-    if(top&&top.score>1.5)result.best=top;
-
-    // Alternatives: next best that aren't the best
-    result.alternatives=result.allScored.slice(1,5).filter(s=>s.score>0.8);
-
-    // Related entries: find entries connected by category relations
-    if(result.best){
-        const bestCat=(result.best.entry.category||'').toLowerCase();
-        const bestKw=(result.best.entry.keywords||[]).map(k=>k.toLowerCase());
-        const relatedCats=CAT_RELATIONS[bestCat]||[];
-
-        result.related=entries
-            .filter(e=>e.id!==result.best.entry.id)
-            .map(e=>{
-                let rScore=0;
-                const eCat=(e.category||'').toLowerCase();
-                const eKw=(e.keywords||[]).map(k=>k.toLowerCase());
-                // Same category
-                if(eCat===bestCat)rScore+=5;
-                // Related category
-                if(relatedCats.some(rc=>eCat.includes(rc)||rc.includes(eCat)))rScore+=3;
-                // Shared keywords
-                for(const kw of eKw){if(bestKw.includes(kw))rScore+=2;}
-                return{entry:e,rScore};
-            })
-            .filter(r=>r.rScore>0)
-            .sort((a,b)=>b.rScore-a.rScore)
-            .slice(0,4)
-            .map(r=>r.entry);
-    }
-
-    return result;
-}
-
-// --- Build natural conversational response ---
-function buildSmartResponse(match, userText){
-    const{best,alternatives,related,allScored,intent}=match;
-
-    // Greeting handling
-    if(intent==='greeting'){
-        let greet="Hello! I'm here to help you with any printing questions. ";
-        // Check if there's a KB topic they might want
-        const topicMatch=allScored.find(s=>s.score>2);
-        if(topicMatch){
-            greet+=`I see you might be asking about <strong>${esc(topicMatch.entry.question)}</strong> — `;
-            greet+=formatAnswer(topicMatch.entry.answer);
-            if(related.length>0)greet+=buildSuggestionHTML(related,'You might also want to know about');
-        }else{
-            greet+="What can I help you with today? I can assist with file preparation, color specifications, paper stocks, shipping, pricing, product details, and more.";
-        }
-        return greet;
-    }
-
-    // Exact match found — build natural answer
-    if(best){
-        let response='';
-        const opener=getConversationalOpener(intent,best.entry);
-        response+=opener;
-        response+=formatAnswer(best.entry.answer);
-
-        // Add related suggestions
-        if(related.length>0){
-            response+=buildSuggestionHTML(related,'Related topics you might find helpful');
-        }
-        // Add close alternatives as "you may also like"
-        if(alternatives.length>0&&alternatives[0].score>2){
-            const altEntries=alternatives.slice(0,2).map(a=>a.entry);
-            response+=buildSuggestionHTML(altEntries,'You may also want to check','blue');
-        }
-        return response;
-    }
-
-    // No exact match — build helpful "did you mean?" response
-    return buildNoMatchResponse(userText,allScored,alternatives,intent);
-}
-
-function getConversationalOpener(intent,entry){
-    const cat=(entry.category||'').toLowerCase();
-    const openers={
-        pricing:["Based on our pricing information, ","Here's what I can share about pricing — ","When it comes to pricing, "],
-        shipping:["Here's what you need to know about shipping — ","For shipping details, ","Regarding delivery options, "],
-        file_prep:["For file preparation, here are the key points — ","Here's a quick guide on file specs — ","When setting up your file, "],
-        material:["Regarding paper and material options — ","Here's what I can tell you about our paper stocks — ","For material specifications, "],
-        color:["When it comes to color specifications — ","Here's the key info on color — ","For color accuracy, "],
-        sizing:["For sizing and dimensions — ","Here are the details on sizes — ","Regarding dimensions, "],
-        turnaround:["Here's what you need to know about turnaround — ","For production timing, ","Regarding how long things take, "],
-        quality:["Here's our guidance on quality — ","For quality-related questions — ","Regarding print quality, "],
-        complaint:["I understand your concern. Here's what I can share — ","I'm sorry to hear that. Here's what you should know — ","Let me help with that — "],
-        discount:["Here's what I can share about discounts — ","Regarding promotional offers — ","For discount information, "],
-        template:["Here's what I can tell you about templates — ","For template-related questions — ","Regarding design templates, "],
-        proof:["Here's how proofs work — ","Regarding proof and approval — ","For proof review details, "],
-        folding:["Here's what you need to know about folding — ","For folding options — ","Regarding fold types, "],
-        binding:["Here's the info on binding methods — ","For binding options — ","Regarding binding types, "],
-        coating:["Here's what I can share about finishes — ","For coating and lamination options — ","Regarding print finishing, "],
-        question:["Here's what I found — ","Great question! Here's the answer — ","Let me look that up for you — "],
-        general:["Here's what I found — ","Let me share what I have on that — ","Here's the information — "],
-        // Product-specific
-        product_bc:["For business cards — ","Here's what you need to know about business cards — ","Regarding business card specs — "],
-        product_flyer:["For flyers — ","Here's the info on flyers — ","Regarding flyer specifications — "],
-        product_brochure:["For brochures — ","Here's what I can share about brochures — ","Regarding brochure options — "],
-        product_banner:["For banners — ","Here's the banner information — ","Regarding banner specs — "],
-        product_sticker:["For stickers and labels — ","Here's what I can tell you about stickers — ","Regarding sticker specs — "],
-        product_postcard:["For postcards — ","Here's the postcard information — ","Regarding postcard details — "],
-        product_poster:["For posters — ","Here's the poster specifications — ","Regarding poster printing — "],
-        product_stationery:["For stationery — ","Here's the stationery info — ","Regarding envelopes and letterheads — "],
-        product_packaging:["For packaging — ","Here's what I can share about packaging — ","Regarding packaging options — "],
-    };
-    const categoryOpeners={
-        color:"When it comes to color — ",
-        paper:"Regarding paper stocks — ",
-        file:"For file specifications — ",
-        shipping:"About shipping — ",
-        pricing:"On pricing — ",
-        design:"For design guidelines — ",
-        finishing:"Regarding finishing options — ",
-        binding:"For binding methods — ",
-        resolution:"About resolution — ",
-        turnaround:"On turnaround times — ",
-        template:"For templates — ",
-        artwork:"Regarding artwork — ",
-        lamination:"About lamination — ",
-        coating:"For coating options — ",
-        bleed:"Regarding bleed and trim — ",
-        trim:"About trim specifications — ",
-        fold:"For folding options — ",
-        bulk:"On bulk orders — ",
-        discount:"Regarding discounts — ",
-        rush:"For rush orders — ",
-        envelope:"About envelopes — ",
-        sticker:"For stickers — ",
-        banner:"Regarding banners — ",
-        'business card':"For business cards — ",
-        flyer:"About flyers — ",
-        brochure:"For brochures — ",
-        postcard:"Regarding postcards — ",
-        poster:"About posters — ",
-        label:"For labels — ",
-        packaging:"Regarding packaging — ",
-        booklet:"For booklets — ",
-        catalog:"About catalogs — ",
-        order:"Regarding orders — ",
-        delivery:"For delivery — ",
-        proof:"About proofs — ",
-        print:"On print specifications — ",
-        product:"Regarding products — ",
-    };
-    // Try intent-specific opener first
-    const intentOpts=openers[intent];
-    if(intentOpts)return intentOpts[Math.floor(Math.random()*intentOpts.length)];
-    // Fall back to category-based opener
-    const catOpener=categoryOpeners[cat];
-    if(catOpener)return catOpener;
-    return"Here's what I found — ";
-}
-
-// Format the raw KB answer into clean, readable HTML
-function formatAnswer(rawAnswer){
-    if(!rawAnswer)return'';
-    let html=rawAnswer;
-    // Ensure <strong> tags work
-    html=html.replace(/&lt;strong&gt;/g,'<strong>').replace(/&lt;\/strong&gt;/g,'</strong>');
-    // Convert newlines to paragraph breaks if no HTML blocks exist
-    if(!html.includes('<p>')&&!html.includes('<ul>')&&!html.includes('<br')){
-        const parts=html.split(/\n\n+/);
-        if(parts.length>1){
-            html=parts.map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
-        }else if(html.includes('\n')){
-            html='<p>'+html.replace(/\n/g,'<br>')+'</p>';
-        }
-    }
-    // Wrap in a container for consistent styling
-    return`<div class="resp-body">${html}</div>`;
-}
-
-// Build clickable suggestion chips
-function buildSuggestionHTML(entries,label,chipClass=''){
-    if(!entries||!entries.length)return'';
-    const labelIcons={amber:'fa-lightbulb',blue:'fa-link',green:'fa-sparkles'};
-    const iconClass=chipClass==='blue'?'blue':'amber';
-    const icon=labelIcons[iconClass]||'fa-lightbulb';
-    let html=`<div class="sugg-section"><p class="sugg-label"><i class="fa-solid ${icon}"></i>${esc(label)}</p><div class="sugg-chips">`;
+    let best=null,bestScore=0;
     for(const entry of entries){
-        const label=entry.question||entry.category||'Learn more';
-        const shortLabel=label.length>45?label.substring(0,42)+'...':label;
-        html+=`<button class="sugg-chip ${chipClass}" onclick="handleSuggestionClick('${esc(label.replace(/'/g,"\\'"))}')"><i class="fa-solid fa-arrow-right"></i>${esc(shortLabel)}</button>`;
+        let score=0;
+        for(const kw of entry.keywords){const kwLower=kw.toLowerCase();if(lower.includes(kwLower)){score+=kwLower.length;}}
+        for(const kw of entry.keywords){const kwLower=kw.toLowerCase();if(kwLower.length>3){for(const word of words){if(word.length>3&&(word.includes(kwLower)||kwLower.includes(word))){score+=Math.min(word.length,kwLower.length)*0.4;}}}}
+        const qWords=entry.question.toLowerCase().split(/\s+/).filter(w=>w.length>3);
+        for(const qw of qWords){for(const word of words){if(word===qw)score+=2;else if(word.includes(qw)||qw.includes(word))score+=0.8;}}
+        if(score>bestScore){bestScore=score;best=entry;}
     }
-    html+='</div></div>';
-    return html;
-}
-
-// No match found — suggest alternatives intelligently
-function buildNoMatchResponse(userText,allScored,alternatives,intent){
-    let response='';
-
-    // Check if there are any partial matches
-    const partials=allScored.filter(s=>s.score>0.5);
-    const closest=alternatives.filter(a=>a.score>0.8);
-
-    if(closest.length>0){
-        response+=`<p>I don't have an exact match for that, but here are some close results that might help:</p>`;
-        // Show closest matches as clickable suggestions
-        const closestEntries=closest.slice(0,3).map(a=>a.entry);
-        response+=buildSuggestionHTML(closestEntries,'Did you mean one of these?','blue');
-        // Also show their answers briefly
-        for(const alt of closest.slice(0,1)){
-            const brief=getBriefAnswer(alt.entry.answer);
-            if(brief)response+=`<p style="margin-top:8px;font-size:13px;color:#7D8590;"><strong style="color:#58A6FF;">Quick preview:</strong> ${brief}</p>`;
-        }
-    }else if(partials.length>0){
-        response+=`<p>I couldn't find a direct answer, but I noticed some related topics in our knowledge base. Take a look:</p>`;
-        const partialEntries=partials.slice(0,4).map(p=>p.entry);
-        response+=buildSuggestionHTML(partialEntries,'You might find these helpful','blue');
-    }else{
-        response+=`<p>I don't have specific information on that topic in our knowledge base just yet.</p>`;
-    }
-
-    // Add intent-based general guidance
-    response+=buildIntentGuidance(intent,userText);
-
-    // Add a broad category suggestion if we have entries
-    if(allScored.length>0&&closest.length===0){
-        // Pick top 3 from different categories if possible
-        const seenCats=new Set();
-        const diverse=allScored.filter(s=>{const c=(s.entry.category||'').toLowerCase();if(seenCats.has(c))return false;seenCats.add(c);return true;}).slice(0,3).map(s=>s.entry);
-        if(diverse.length>0){
-            response+=buildSuggestionHTML(diverse,'Browse popular topics');
-        }
-    }
-
-    response+=`<p style="margin-top:10px;font-size:12px;color:#7D8590;">If none of these match, I can connect you with a supervisor for further assistance.</p>`;
-    return response;
-}
-
-// Get a brief 1-2 sentence preview of an answer
-function getBriefAnswer(raw){
-    if(!raw)return'';
-    const clean=raw.replace(/<[^>]*>/g,'').replace(/\n+/g,' ').trim();
-    if(clean.length<=120)return clean;
-    return clean.substring(0,117)+'...';
-}
-
-// Add general guidance based on detected intent when no KB match
-function buildIntentGuidance(intent,userText){
-    const guidance={
-        greeting:'',
-        pricing:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> For accurate pricing, you can also check the product page directly or request a custom quote through the order system.</p>',
-        shipping:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Shipping options and costs are calculated at checkout based on destination, weight, and selected carrier.</p>',
-        file_prep:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Tip: Always use our file preparation guidelines and templates to avoid delays. Files should be print-ready before upload.</p>',
-        material:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Paper samples may be available upon request — you can ask a supervisor to order sample kits for customers.</p>',
-        color:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Remember: Screen colors (RGB) will always look different in print (CMYK). A hard proof is recommended for critical color matches.</p>',
-        sizing:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Custom sizes are available for most products. Size affects pricing and may impact turnaround time.</p>',
-        turnaround:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Rush production is available for most products at an additional cost. Standard turnaround starts from file approval.</p>',
-        quality:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Quality issues should be documented with photos and reported through the incident system for proper resolution.</p>',
-        complaint:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> For complaints, please use the "Report Incident" button below to log it formally for tracking and resolution.</p>',
-        discount:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Current promotions and discount codes are typically displayed on the product page during checkout.</p>',
-        template:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Templates are available for download on the product page in multiple formats (AI, PSD, PDF, INDD).</p>',
-        proof:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Proofs are typically generated within a few hours of file upload. Digital proofs are free; hard proofs may incur extra cost and time.</p>',
-        product_bc:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Business cards are one of our most popular products. Standard size is 3.5" x 2" with various paper and finish options.</p>',
-        product_flyer:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Flyers come in various sizes — standard options include 8.5"x11", 8.5"x5.5", and 5.5"x8.5".</p>',
-        product_brochure:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Brochures are available in bi-fold, tri-fold, and custom folding options with multiple paper stocks.</p>',
-        product_banner:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Banners are printed on vinyl, mesh, or fabric materials. Grommets and hemming are available.</p>',
-        product_sticker:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Stickers can be die-cut to any shape. Available on paper, vinyl, or clear material with optional lamination.</p>',
-        product_postcard:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Postcards are available in standard USPS sizes for mailing: 4"x6", 5"x7", 5.5"x8.5", and 6"x11".</p>',
-        product_poster:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Posters are printed in large format with high-resolution output. Available in various paper stocks and finishes.</p>',
-        product_stationery:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Stationery sets typically include letterhead and envelopes. Matching business cards can be added.</p>',
-        product_packaging:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Custom packaging options include boxes, sleeves, and labels with various material and printing options.</p>',
-    };
-    return guidance[intent]||'';
-}
-
-// Handle clicking a suggestion chip — sends it as a user message
-function handleSuggestionClick(text){
-    const input=document.getElementById('chat-input');
-    if(!input)return;
-    input.value=text;
-    sendMessage();
+    if(best&&bestScore>1.5)return best.answer;
+    return null;
 }
 
 // ==============================================
@@ -832,19 +451,7 @@ async function createNewSession(){
     S.renderedMsgIds.clear();cleanupMsgChannel();document.getElementById('messages').innerHTML='';
     try{const{data,error}=await db.from('sessions').insert({user_id:S.profile.id,user_name:S.profile.name,user_role:S.profile.role}).select('id').single();if(error)throw error;S.currentSessionId=data.id;subscribeToMessages(data.id);}
     catch(e){console.error('Session error:',e);showToast('Could not start session: '+e.message,'error');S.currentSessionId=null;}
-    renderMsg({role:'bot',message:`Hi there! I'm your AVX Print Assistant. I can help you with:<br><br>
-<div class="sugg-section" style="border:none;margin-top:4px;padding-top:0;">
-<div class="sugg-chips">
-<button class="sugg-chip" onclick="handleSuggestionClick('What file format should I use?')"><i class="fa-solid fa-file"></i>File Preparation</button>
-<button class="sugg-chip" onclick="handleSuggestionClick('What color mode is required?')"><i class="fa-solid fa-palette"></i>Color Specifications</button>
-<button class="sugg-chip" onclick="handleSuggestionClick('What paper stocks are available?')"><i class="fa-solid fa-layer-group"></i>Paper & Materials</button>
-<button class="sugg-chip" onclick="handleSuggestionClick('What are the shipping options?')"><i class="fa-solid fa-truck"></i>Shipping & Delivery</button>
-<button class="sugg-chip" onclick="handleSuggestionClick('What is the turnaround time?')"><i class="fa-solid fa-clock"></i>Turnaround Time</button>
-<button class="sugg-chip" onclick="handleSuggestionClick('Tell me about business card specs')"><i class="fa-solid fa-id-card"></i>Business Cards</button>
-<button class="sugg-chip blue" onclick="handleSuggestionClick('What coating and lamination options are there?')"><i class="fa-solid fa-droplet"></i>Coating & Lamination</button>
-<button class="sugg-chip green" onclick="handleSuggestionClick('How do I prepare a file for print?')"><i class="fa-solid fa-wand-magic-sparkles"></i>File Prep Guide</button>
-</div></div>
-<br>Just type your question or click a topic above to get started!`,time:now()});
+    renderMsg({role:'bot',message:"Hi there, I'm your Print Assistant. Please let me know how can I help you today.<br><br>• I can help you assist your customer<br>• I can assist about our printing standards<br>• I can assist you in locating the product<br>• I provide production guidelines<br>• I can locate specific topics in our knowledge base<br><br>Just tell me!",time:now()});
 }
 
 async function saveSession(){
@@ -862,11 +469,22 @@ async function saveSession(){
 
 function clearChat(){if(S.renderedMsgIds.size<=0)return;showConfirm('Discard conversation?','Unsaved messages will be lost.',async()=>{await createNewSession();showToast('New session started','info');});}
 
+// KEPT: Message subscription — essential for chat to work (bot replies come through this)
 function subscribeToMessages(sid){cleanupMsgChannel();msgChannel=db.channel(`msg-${sid}`).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`session_id=eq.${sid}`},p=>{const m=p.new;if(!S.renderedMsgIds.has(m.id)){S.renderedMsgIds.add(m.id);renderMsg({role:m.sender_role,message:m.content,time:m.created_at,id:m.id});}}).subscribe();}
 function cleanupMsgChannel(){if(msgChannel){db.removeChannel(msgChannel);msgChannel=null;}}
+
+// CHANGED: Removed subscribeSupFeed — supervisor data is now manual-only
+// OLD CODE (removed):
+// function subscribeSupFeed(){cleanupSupFeed();supFeedChannel=db.channel('sup-feed')
+//   .on('postgres_changes',{event:'INSERT',schema:'public',table:'sessions'},()=>{loadActiveCount();if(S.supView==='home')refreshSupHomeFeed();})
+//   .on('postgres_changes',{event:'INSERT',schema:'public',table:'incidents'},()=>{if(S.supView==='incidents')filterIncidents();})
+//   .subscribe();}
+// function cleanupSupFeed(){if(supFeedChannel){db.removeChannel(supFeedChannel);supFeedChannel=null;}}
+
+// KEPT: Conversation modal subscription — needed to see live messages when viewing a session
 function subscribeConvMessages(sid){cleanupConvChannel();S.convRenderedIds.clear();convChannel=db.channel(`conv-${sid}`).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`session_id=eq.${sid}`},p=>{const m=p.new;if(!S.convRenderedIds.has(m.id)){S.convRenderedIds.add(m.id);appendConvMsg(m);}}).subscribe();document.getElementById('conv-live').classList.remove('hidden');}
 function cleanupConvChannel(){if(convChannel){db.removeChannel(convChannel);convChannel=null;}const l=document.getElementById('conv-live');if(l)l.classList.add('hidden');}
-function cleanupRealtime(){cleanupMsgChannel();cleanupConvChannel();}
+function cleanupRealtime(){cleanupMsgChannel();cleanupConvChannel();/* CHANGED: removed cleanupSupFeed() */}
 
 // ==============================================
 // 8. CHAT UI
@@ -874,7 +492,7 @@ function cleanupRealtime(){cleanupMsgChannel();cleanupConvChannel();}
 function renderMsg(msg){
     const c=document.getElementById('messages'),d=document.createElement('div');d.className='msg-enter flex '+(msg.role==='user'?'justify-end':'justify-start');const t=fmtT(msg.time);
     if(msg.role==='user')d.innerHTML=`<div class="max-w-[75%] md:max-w-[60%]"><div class="bg-avx-accent/15 border border-avx-accent/20 rounded-2xl rounded-br-md px-4 py-2.5"><p class="text-sm text-avx-text leading-relaxed">${esc(msg.message)}</p></div><p class="text-[10px] text-avx-muted/50 text-right mt-1 mr-1">${t}</p></div>`;
-    else d.innerHTML=`<div class="max-w-[85%] md:max-w-[75%]"><div class="flex items-start gap-2.5"><div class="w-7 h-7 rounded-lg bg-avx-accent/10 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-solid fa-print text-avx-accent text-[10px]"></i></div><div class="bg-avx-card border border-avx-border rounded-2xl rounded-bl-md px-4 py-2.5"><div class="text-sm text-avx-text leading-relaxed">${msg.message}</div></div></div><p class="text-[10px] text-avx-muted/50 mt-1 ml-9">${t}</p></div>`;
+    else d.innerHTML=`<div class="max-w-[80%] md:max-w-[70%]"><div class="flex items-start gap-2.5"><div class="w-7 h-7 rounded-lg bg-avx-accent/10 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-solid fa-print text-avx-accent text-[10px]"></i></div><div class="bg-avx-card border border-avx-border rounded-2xl rounded-bl-md px-4 py-2.5"><p class="text-sm text-avx-text leading-relaxed">${msg.message}</p></div></div><p class="text-[10px] text-avx-muted/50 mt-1 ml-9">${t}</p></div>`;
     c.appendChild(d);c.scrollTop=c.scrollHeight;
 }
 function showTyping(){const c=document.getElementById('messages'),d=document.createElement('div');d.id='typing-ind';d.className='msg-enter flex justify-start';d.innerHTML=`<div class="flex items-start gap-2.5"><div class="w-7 h-7 rounded-lg bg-avx-accent/10 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-solid fa-print text-avx-accent text-[10px]"></i></div><div class="bg-avx-card border border-avx-border rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-1.5"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div></div>`;c.appendChild(d);c.scrollTop=c.scrollHeight;}
@@ -886,31 +504,17 @@ async function sendMessage(){
     if(!text||!S.currentSessionId)return;input.value='';input.style.height='auto';
     try{const{data,error}=await db.from('messages').insert({session_id:S.currentSessionId,user_id:S.profile.id,sender_role:'user',content:text}).select('id').single();if(error)throw error;S.renderedMsgIds.add(data.id);renderMsg({role:'user',message:text,time:now(),id:data.id});}
     catch(e){showToast('Failed to send: '+e.message,'error');return;}
-
-    // Update session metadata
-    const u={};const on=document.getElementById('ct-order').value.trim(),ch=S.channel,ps=document.getElementById('ct-site').value;
-    if(on)u.order_number=on;if(ch)u.channel=ch;if(ps)u.product_site=ps;
-    if(Object.keys(u).length>0)await db.from('sessions').update(u).eq('id',S.currentSessionId);
-
+    const u={};const on=document.getElementById('ct-order').value.trim(),ch=S.channel,ps=document.getElementById('ct-site').value;if(on)u.order_number=on;if(ch)u.channel=ch;if(ps)u.product_site=ps;if(Object.keys(u).length>0)await db.from('sessions').update(u).eq('id',S.currentSessionId);
     showTyping();
-
-    // --- SMART RESPONSE ENGINE (replaces raw KB text + RPC) ---
+    const kbAnswer=await queryKB(text);
     try{
-        const match=await queryKBSmart(text);
-        const responseHTML=buildSmartResponse(match,text);
-
-        // Save bot response to DB
-        const{data:botData,error:botErr}=await db.from('messages').insert({session_id:S.currentSessionId,user_id:S.profile.id,sender_role:'bot',content:responseHTML}).select('id').single();
-        if(!botErr&&botData){
-            S.renderedMsgIds.add(botData.id);
-        }
-        // Render the response
-        renderMsg({role:'bot',message:responseHTML,time:now()});
+        const{error:botError}=await db.rpc('generate_bot_response',{p_session_id:S.currentSessionId,p_message:text,p_kb_answer:kbAnswer});
+        if(botError)throw botError;
     }catch(e){
-        console.error('Smart response error:',e);
-        renderMsg({role:'bot',message:"I'm having trouble processing that right now. Please try again or I can connect you with a supervisor for further assistance.",time:now()});
+        hideTyping();
+        if(kbAnswer){renderMsg({role:'bot',message:kbAnswer,time:now()});}
+        else{renderMsg({role:'bot',message:"I'm not sure about that. Let me connect you with a supervisor for further assistance.",time:now()});}
     }
-
     hideTyping();
 }
 
@@ -923,56 +527,82 @@ async function switchSupView(view){
     S.supView=view;
     document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b.dataset.view===view);});
     const c=document.getElementById('sup-content');
-    switch(view){case'home':await renderSupHome(c);break;case'tracker':await renderStaffTracker(c);break;case'jobs':await renderJobTracker(c);break;case'incidents':await renderIncidents(c);break;case'sites':await renderSites(c);break;case'knowledge':await renderKnowledge(c);break;}
+    switch(view){
+        case'home':await renderSupHome(c);break;
+        case'tracker':await renderStaffTracker(c);break;
+        case'jobs':await renderJobTracker(c);break;
+        case'incidents':await renderIncidents(c);break;
+        case'sites':await renderSites(c);break;
+        case'knowledge':await renderKnowledge(c);break;
+    }
 }
-async function loadActiveCount(){try{const{count,error}=await db.from('sessions').select('*',{count:'exact',head:true}).eq('status','active').gte('created_at',new Date(Date.now()-86400000).toISOString());if(error)throw error;document.getElementById('sup-active-count').textContent=count+' active sessions today';}catch(e){document.getElementById('sup-active-count').textContent='—';}}
+
+async function loadActiveCount(){
+    try{const{count,error}=await db.from('sessions').select('*',{count:'exact',head:true}).eq('status','active').gte('created_at',new Date(Date.now()-86400000).toISOString());if(error)throw error;document.getElementById('sup-active-count').textContent=count+' active sessions today';}
+    catch(e){document.getElementById('sup-active-count').textContent='—';}
+}
 
 async function renderSupHome(c){
     c.innerHTML='<div class="flex items-center justify-center py-20 text-avx-muted"><i class="fa-solid fa-spinner fa-spin mr-3"></i>Loading...</div>';
-    try{const{data:sessions,error}=await db.from('sessions').select('*').order('created_at',{ascending:false}).limit(50);if(error)throw error;
-    if(!sessions||!sessions.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-inbox text-3xl mb-3 block opacity-30"></i><p>No sessions yet. Click Refresh to check for new data.</p></div>';return;}
-    c.innerHTML=`<div class="mb-4 flex items-center justify-between"><h3 class="font-display font-semibold text-avx-text">Recent Sessions</h3><span class="text-xs text-avx-muted">${sessions.length} shown</span></div><div class="space-y-2">${sessions.map(s=>`<div class="bg-avx-surface border border-avx-border rounded-xl p-4 hover-card cursor-pointer" onclick="openConvModal('${s.id}','${esc(s.user_name||'')}','${esc(s.user_role||'')}','${s.created_at||''}')"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><span class="text-sm font-medium text-avx-text">${esc(s.user_name||'Unknown')}</span><span class="ch-badge bg-avx-accent/10 text-avx-accent">${esc(s.user_role||'')}</span>${s.channel?`<span class="ch-badge bg-avx-info/10 text-avx-info">${esc(s.channel)}</span>`:''}</div><span class="text-xs text-avx-muted">${fmtDT(s.created_at)}</span></div>${s.order_number?`<p class="text-xs text-avx-muted mb-1"><i class="fa-solid fa-hashtag mr-1"></i>${esc(s.order_number)}</p>`:''}${s.product_site?`<p class="text-xs text-avx-muted"><i class="fa-solid fa-globe mr-1"></i>${esc(s.product_site)}</p>`:''}</div>`).join('')}</div>`;}
-    catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><i class="fa-solid fa-circle-xmark text-3xl mb-3 block"></i><p>Error loading sessions: ${esc(e.message)}</p></div>`;}
+    try{
+        const{data:sessions,error}=await db.from('sessions').select('*').order('created_at',{ascending:false}).limit(50);
+        if(error)throw error;
+        if(!sessions||!sessions.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-inbox text-3xl mb-3 block opacity-30"></i><p>No sessions yet. Click Refresh to check for new data.</p></div>';return;}
+        c.innerHTML=`<div class="mb-4 flex items-center justify-between"><h3 class="font-display font-semibold text-avx-text">Recent Sessions</h3><span class="text-xs text-avx-muted">${sessions.length} shown</span></div><div class="space-y-2">${sessions.map(s=>`<div class="bg-avx-surface border border-avx-border rounded-xl p-4 hover-card cursor-pointer" onclick="openConvModal('${s.id}','${esc(s.user_name||'')}','${esc(s.user_role||'')}','${s.created_at||''}')"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><span class="text-sm font-medium text-avx-text">${esc(s.user_name||'Unknown')}</span><span class="ch-badge bg-avx-accent/10 text-avx-accent">${esc(s.user_role||'')}</span>${s.channel?`<span class="ch-badge bg-avx-info/10 text-avx-info">${esc(s.channel)}</span>`:''}</div><span class="text-xs text-avx-muted">${fmtDT(s.created_at)}</span></div>${s.order_number?`<p class="text-xs text-avx-muted mb-1"><i class="fa-solid fa-hashtag mr-1"></i>${esc(s.order_number)}</p>`:''}${s.product_site?`<p class="text-xs text-avx-muted"><i class="fa-solid fa-globe mr-1"></i>${esc(s.product_site)}</p>`:''}</div>`).join('')}</div>`;
+    }catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><i class="fa-solid fa-circle-xmark text-3xl mb-3 block"></i><p>Error loading sessions: ${esc(e.message)}</p></div>`;}
 }
 
 async function renderStaffTracker(c){
     c.innerHTML='<div class="flex items-center justify-center py-20 text-avx-muted"><i class="fa-solid fa-spinner fa-spin mr-3"></i>Loading...</div>';
-    try{const{data:staff,error}=await db.from('profiles').select('*').neq('role','supervisor').order('name');if(error)throw error;
-    if(!staff||!staff.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-users text-3xl mb-3 block opacity-30"></i><p>No staff found.</p></div>';return;}
-    c.innerHTML=`<h3 class="font-display font-semibold text-avx-text mb-4">Staff Status</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">${staff.map(s=>`<div class="bg-avx-surface border border-avx-border rounded-xl p-4 hover-card"><div class="flex items-center gap-3 mb-2"><div class="w-9 h-9 rounded-full bg-avx-accent/10 flex items-center justify-center text-avx-accent font-semibold text-sm">${(s.name||'?').charAt(0).toUpperCase()}</div><div><p class="text-sm font-medium text-avx-text">${esc(s.name||'Unknown')}</p><p class="text-xs text-avx-muted">${esc(s.role||'')}${s.designation?' — '+esc(s.designation):''}</p></div></div><div class="flex items-center gap-2 text-xs text-avx-muted">${s.login_time&&!s.logout_time?'<span class="status-dot bg-avx-success"></span> Online':'<span class="status-dot" style="background:#7D8590"></span> Offline'}${s.login_time?`<span>Last: ${fmtT(s.logout_time||s.login_time)}</span>`:''}</div></div>`).join('')}</div>`;}
-    catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><p>Error: ${esc(e.message)}</p></div>`;}
+    try{
+        const{data:staff,error}=await db.from('profiles').select('*').neq('role','supervisor').order('name');
+        if(error)throw error;
+        if(!staff||!staff.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-users text-3xl mb-3 block opacity-30"></i><p>No staff found.</p></div>';return;}
+        c.innerHTML=`<h3 class="font-display font-semibold text-avx-text mb-4">Staff Status</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">${staff.map(s=>`<div class="bg-avx-surface border border-avx-border rounded-xl p-4 hover-card"><div class="flex items-center gap-3 mb-2"><div class="w-9 h-9 rounded-full bg-avx-accent/10 flex items-center justify-center text-avx-accent font-semibold text-sm">${(s.name||'?').charAt(0).toUpperCase()}</div><div><p class="text-sm font-medium text-avx-text">${esc(s.name||'Unknown')}</p><p class="text-xs text-avx-muted">${esc(s.role||'')}${s.designation?' — '+esc(s.designation):''}</p></div></div><div class="flex items-center gap-2 text-xs text-avx-muted">${s.login_time&&!s.logout_time?'<span class="status-dot bg-avx-success"></span> Online':'<span class="status-dot" style="background:#7D8590"></span> Offline'}${s.login_time?`<span>Last: ${fmtT(s.logout_time||s.login_time)}</span>`:''}</div></div>`).join('')}</div>`;
+    }catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><p>Error: ${esc(e.message)}</p></div>`;}
 }
 
 async function renderJobTracker(c){
     c.innerHTML='<div class="flex items-center justify-center py-20 text-avx-muted"><i class="fa-solid fa-spinner fa-spin mr-3"></i>Loading...</div>';
-    try{const{data:jobs,error}=await db.from('sessions').select('*').not('order_number','is',null).order('created_at',{ascending:false}).limit(100);if(error)throw error;
-    if(!jobs||!jobs.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-hashtag text-3xl mb-3 block opacity-30"></i><p>No jobs tracked yet.</p></div>';return;}
-    c.innerHTML=`<h3 class="font-display font-semibold text-avx-text mb-4">Job Tracker</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="text-left text-xs text-avx-muted border-b border-avx-border"><th class="pb-2 pr-4">Order #</th><th class="pb-2 pr-4">Consultant</th><th class="pb-2 pr-4">Site</th><th class="pb-2 pr-4">Channel</th><th class="pb-2">Time</th></tr></thead><tbody>${jobs.map(j=>`<tr class="border-b border-avx-border/50 hover:bg-avx-surface/50"><td class="py-2.5 pr-4 font-mono text-avx-accent">${esc(j.order_number||'')}</td><td class="py-2.5 pr-4 text-avx-text">${esc(j.user_name||'')}</td><td class="py-2.5 pr-4 text-avx-muted">${esc(j.product_site||'—')}</td><td class="py-2.5 pr-4"><span class="ch-badge bg-avx-info/10 text-avx-info">${esc(j.channel||'')}</span></td><td class="py-2.5 text-avx-muted text-xs">${fmtDT(j.created_at)}</td></tr>`).join('')}</tbody></table></div>`;}
-    catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><p>Error: ${esc(e.message)}</p></div>`;}
+    try{
+        const{data:jobs,error}=await db.from('sessions').select('*').not('order_number','is',null).order('created_at',{ascending:false}).limit(100);
+        if(error)throw error;
+        if(!jobs||!jobs.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-hashtag text-3xl mb-3 block opacity-30"></i><p>No jobs tracked yet.</p></div>';return;}
+        c.innerHTML=`<h3 class="font-display font-semibold text-avx-text mb-4">Job Tracker</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="text-left text-xs text-avx-muted border-b border-avx-border"><th class="pb-2 pr-4">Order #</th><th class="pb-2 pr-4">Consultant</th><th class="pb-2 pr-4">Site</th><th class="pb-2 pr-4">Channel</th><th class="pb-2">Time</th></tr></thead><tbody>${jobs.map(j=>`<tr class="border-b border-avx-border/50 hover:bg-avx-surface/50"><td class="py-2.5 pr-4 font-mono text-avx-accent">${esc(j.order_number||'')}</td><td class="py-2.5 pr-4 text-avx-text">${esc(j.user_name||'')}</td><td class="py-2.5 pr-4 text-avx-muted">${esc(j.product_site||'—')}</td><td class="py-2.5 pr-4"><span class="ch-badge bg-avx-info/10 text-avx-info">${esc(j.channel||'')}</span></td><td class="py-2.5 text-avx-muted text-xs">${fmtDT(j.created_at)}</td></tr>`).join('')}</tbody></table></div>`;
+    }catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><p>Error: ${esc(e.message)}</p></div>`;}
 }
 
 async function renderIncidents(c){
     c.innerHTML='<div class="flex items-center justify-center py-20 text-avx-muted"><i class="fa-solid fa-spinner fa-spin mr-3"></i>Loading...</div>';
-    try{const{data:incidents,error}=await db.from('incidents').select('*,profiles(name)').order('created_at',{ascending:false}).limit(100);if(error)throw error;
-    if(!incidents||!incidents.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-triangle-exclamation text-3xl mb-3 block opacity-30"></i><p>No incidents reported.</p></div>';return;}
-    c.innerHTML=`<h3 class="font-display font-semibold text-avx-text mb-4">Incidents</h3><div class="space-y-2">${incidents.map(i=>`<div class="bg-avx-surface border border-avx-border rounded-xl p-4 hover-card"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><span class="ch-badge bg-avx-error/10 text-avx-error">${esc(i.category||'')}</span>${statusBadge(i.status)}</div><span class="text-xs text-avx-muted">${fmtDT(i.created_at)}</span></div><p class="text-sm text-avx-text mb-1">${esc(i.description||'')}</p><p class="text-xs text-avx-muted">By: ${esc(i.profiles?.name||'Unknown')}</p>${i.status!=='resolved'?`<div class="mt-2 flex gap-2"><button onclick="updateIncidentStatus('${i.id}','resolved')" class="text-xs px-3 py-1 rounded-lg bg-avx-success/10 text-avx-success border border-avx-success/20 hover:bg-avx-success/20 transition-all">Resolve</button>${i.status==='open'?`<button onclick="updateIncidentStatus('${i.id}','in_progress')" class="text-xs px-3 py-1 rounded-lg bg-avx-accent/10 text-avx-accent border border-avx-accent/20 hover:bg-avx-accent/20 transition-all">In Progress</button>`:''}</div>`:''}</div>`).join('')}</div>`;}
-    catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><p>Error: ${esc(e.message)}</p></div>`;}
+    try{
+        const{data:incidents,error}=await db.from('incidents').select('*,profiles(name)').order('created_at',{ascending:false}).limit(100);
+        if(error)throw error;
+        if(!incidents||!incidents.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-triangle-exclamation text-3xl mb-3 block opacity-30"></i><p>No incidents reported.</p></div>';return;}
+        c.innerHTML=`<h3 class="font-display font-semibold text-avx-text mb-4">Incidents</h3><div class="space-y-2">${incidents.map(i=>`<div class="bg-avx-surface border border-avx-border rounded-xl p-4 hover-card"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><span class="ch-badge bg-avx-error/10 text-avx-error">${esc(i.category||'')}</span>${statusBadge(i.status)}</div><span class="text-xs text-avx-muted">${fmtDT(i.created_at)}</span></div><p class="text-sm text-avx-text mb-1">${esc(i.description||'')}</p><p class="text-xs text-avx-muted">By: ${esc(i.profiles?.name||'Unknown')}</p>${i.status!=='resolved'?`<div class="mt-2 flex gap-2"><button onclick="updateIncidentStatus('${i.id}','resolved')" class="text-xs px-3 py-1 rounded-lg bg-avx-success/10 text-avx-success border border-avx-success/20 hover:bg-avx-success/20 transition-all">Resolve</button>${i.status==='open'?`<button onclick="updateIncidentStatus('${i.id}','in_progress')" class="text-xs px-3 py-1 rounded-lg bg-avx-accent/10 text-avx-accent border border-avx-accent/20 hover:bg-avx-accent/20 transition-all">In Progress</button>`:''}</div>`:''}</div>`).join('')}</div>`;
+    }catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><p>Error: ${esc(e.message)}</p></div>`;}
 }
 
-async function updateIncidentStatus(id,status){try{await db.from('incidents').update({status}).eq('id',id);showToast('Incident updated','success');if(S.supView==='incidents')renderIncidents(document.getElementById('sup-content'));}catch(e){showToast('Failed: '+e.message,'error');}}
+async function updateIncidentStatus(id,status){
+    try{await db.from('incidents').update({status}).eq('id',id);showToast('Incident updated','success');if(S.supView==='incidents')renderIncidents(document.getElementById('sup-content'));}
+    catch(e){showToast('Failed: '+e.message,'error');}
+}
 
 async function renderSites(c){
     c.innerHTML='<div class="flex items-center justify-center py-20 text-avx-muted"><i class="fa-solid fa-spinner fa-spin mr-3"></i>Loading...</div>';
-    try{const sites=await loadSites();if(!sites||!sites.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-globe text-3xl mb-3 block opacity-30"></i><p>No sites configured.</p></div>';return;}
-    c.innerHTML=`<div class="flex items-center justify-between mb-4"><h3 class="font-display font-semibold text-avx-text">Product Sites</h3><button onclick="openSiteModal()" class="text-xs px-3 py-1.5 rounded-lg bg-avx-accent/10 text-avx-accent border border-avx-accent/20 hover:bg-avx-accent/20 transition-all"><i class="fa-solid fa-plus mr-1"></i>Add Site</button></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">${sites.map(s=>`<div class="site-card bg-avx-surface border border-avx-border rounded-xl p-4"><div class="flex items-center justify-between mb-2"><h4 class="text-sm font-medium text-avx-text">${esc(s.name)}</h4><div class="flex gap-1"><button onclick="openSiteModal('${s.id}','${esc(s.name)}','${esc(s.url||'')}',${s.sort_order||0})" class="w-7 h-7 rounded-lg hover:bg-avx-card flex items-center justify-center text-avx-muted hover:text-avx-accent transition-all text-xs"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSite('${s.id}')" class="w-7 h-7 rounded-lg hover:bg-avx-error/10 flex items-center justify-center text-avx-muted hover:text-avx-error transition-all text-xs"><i class="fa-solid fa-trash"></i></button></div></div>${s.url?`<a href="${esc(s.url)}" target="_blank" class="text-xs text-avx-info hover:underline block mb-1 truncate">${esc(s.url)}</a>`:''}</div>`).join('')}</div>`;}
-    catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><p>Error: ${esc(e.message)}</p></div>`;}
+    try{
+        const sites=await loadSites();
+        if(!sites||!sites.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-globe text-3xl mb-3 block opacity-30"></i><p>No sites configured.</p></div>';return;}
+        c.innerHTML=`<div class="flex items-center justify-between mb-4"><h3 class="font-display font-semibold text-avx-text">Product Sites</h3><button onclick="openSiteModal()" class="text-xs px-3 py-1.5 rounded-lg bg-avx-accent/10 text-avx-accent border border-avx-accent/20 hover:bg-avx-accent/20 transition-all"><i class="fa-solid fa-plus mr-1"></i>Add Site</button></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">${sites.map(s=>`<div class="site-card bg-avx-surface border border-avx-border rounded-xl p-4"><div class="flex items-center justify-between mb-2"><h4 class="text-sm font-medium text-avx-text">${esc(s.name)}</h4><div class="flex gap-1"><button onclick="openSiteModal('${s.id}','${esc(s.name)}','${esc(s.url||'')}',${s.sort_order||0})" class="w-7 h-7 rounded-lg hover:bg-avx-card flex items-center justify-center text-avx-muted hover:text-avx-accent transition-all text-xs"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSite('${s.id}')" class="w-7 h-7 rounded-lg hover:bg-avx-error/10 flex items-center justify-center text-avx-muted hover:text-avx-error transition-all text-xs"><i class="fa-solid fa-trash"></i></button></div></div>${s.url?`<a href="${esc(s.url)}" target="_blank" class="text-xs text-avx-info hover:underline block mb-1 truncate">${esc(s.url)}</a>`:''}</div>`).join('')}</div>`;
+    }catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><p>Error: ${esc(e.message)}</p></div>`;}
 }
 
 async function renderKnowledge(c){
     c.innerHTML='<div class="flex items-center justify-center py-20 text-avx-muted"><i class="fa-solid fa-spinner fa-spin mr-3"></i>Loading...</div>';
-    try{const entries=await loadKB();if(!entries||!entries.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-brain text-3xl mb-3 block opacity-30"></i><p>No knowledge base entries.</p></div>';return;}
-    c.innerHTML=`<div class="flex items-center justify-between mb-4"><h3 class="font-display font-semibold text-avx-text">Knowledge Base (${entries.length})</h3><div class="flex gap-2"><button onclick="openImportModal()" class="text-xs px-3 py-1.5 rounded-lg bg-avx-info/10 text-avx-info border border-avx-info/20 hover:bg-avx-info/20 transition-all"><i class="fa-solid fa-file-import mr-1"></i>Import</button><button onclick="openKbModal()" class="text-xs px-3 py-1.5 rounded-lg bg-avx-accent/10 text-avx-accent border border-avx-accent/20 hover:bg-avx-accent/20 transition-all"><i class="fa-solid fa-plus mr-1"></i>Add</button></div></div><div class="space-y-2">${entries.map(e=>`<div class="bg-avx-surface border border-avx-border rounded-xl p-4 hover-card"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><span class="kb-cat-tag bg-avx-accent/10 text-avx-accent">${esc(e.category||'')}</span><span class="text-xs text-avx-muted">Priority: ${e.priority||0}</span></div><div class="flex gap-1"><button onclick="openKbModal('${e.id}','${esc(e.category||'')}','${esc((e.keywords||[]).join(','))}','${esc(e.question||'')}','${esc(e.answer||'').replace(/'/g,"\\'")}',${e.priority||0})" class="w-7 h-7 rounded-lg hover:bg-avx-card flex items-center justify-center text-avx-muted hover:text-avx-accent transition-all text-xs"><i class="fa-solid fa-pen"></i></button><button onclick="deleteKbEntry('${e.id}')" class="w-7 h-7 rounded-lg hover:bg-avx-error/10 flex items-center justify-center text-avx-muted hover:text-avx-error transition-all text-xs"><i class="fa-solid fa-trash"></i></button></div></div><p class="text-sm font-medium text-avx-text mb-1">${esc(e.question||'')}</p><p class="text-xs text-avx-muted line-clamp-2">${esc((e.answer||'').replace(/<[^>]*>/g,''))}</p><p class="text-xs text-avx-muted/50 mt-2">Keywords: ${esc((e.keywords||[]).join(', '))}</p></div>`).join('')}</div>`;}
-    catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><p>Error: ${esc(e.message)}</p></div>`;}
+    try{
+        const entries=await loadKB();
+        if(!entries||!entries.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-brain text-3xl mb-3 block opacity-30"></i><p>No knowledge base entries.</p></div>';return;}
+        c.innerHTML=`<div class="flex items-center justify-between mb-4"><h3 class="font-display font-semibold text-avx-text">Knowledge Base (${entries.length})</h3><div class="flex gap-2"><button onclick="openImportModal()" class="text-xs px-3 py-1.5 rounded-lg bg-avx-info/10 text-avx-info border border-avx-info/20 hover:bg-avx-info/20 transition-all"><i class="fa-solid fa-file-import mr-1"></i>Import</button><button onclick="openKbModal()" class="text-xs px-3 py-1.5 rounded-lg bg-avx-accent/10 text-avx-accent border border-avx-accent/20 hover:bg-avx-accent/20 transition-all"><i class="fa-solid fa-plus mr-1"></i>Add</button></div></div><div class="space-y-2">${entries.map(e=>`<div class="bg-avx-surface border border-avx-border rounded-xl p-4 hover-card"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><span class="kb-cat-tag bg-avx-accent/10 text-avx-accent">${esc(e.category||'')}</span><span class="text-xs text-avx-muted">Priority: ${e.priority||0}</span></div><div class="flex gap-1"><button onclick="openKbModal('${e.id}','${esc(e.category||'')}','${esc((e.keywords||[]).join(','))}','${esc(e.question||'')}','${esc(e.answer||'').replace(/'/g,"\\'")}',${e.priority||0})" class="w-7 h-7 rounded-lg hover:bg-avx-card flex items-center justify-center text-avx-muted hover:text-avx-accent transition-all text-xs"><i class="fa-solid fa-pen"></i></button><button onclick="deleteKbEntry('${e.id}')" class="w-7 h-7 rounded-lg hover:bg-avx-error/10 flex items-center justify-center text-avx-muted hover:text-avx-error transition-all text-xs"><i class="fa-solid fa-trash"></i></button></div></div><p class="text-sm font-medium text-avx-text mb-1">${esc(e.question||'')}</p><p class="text-xs text-avx-muted line-clamp-2">${esc((e.answer||'').replace(/<[^>]*>/g,''))}</p><p class="text-xs text-avx-muted/50 mt-2">Keywords: ${esc((e.keywords||[]).join(', '))}</p></div>`).join('')}</div>`;
+    }catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><p>Error: ${esc(e.message)}</p></div>`;}
 }
 
 // ==============================================
@@ -984,16 +614,21 @@ async function openConvModal(sid,name,role,time){
     document.getElementById('conv-messages').innerHTML='<div class="flex items-center justify-center py-10 text-avx-muted"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</div>';
     document.getElementById('conv-notes').classList.add('hidden');
     subscribeConvMessages(sid);
-    try{const{data:msgs,error}=await db.from('messages').select('*').eq('session_id',sid).order('created_at',{ascending:true});if(error)throw error;
-    const{data:session}=await db.from('sessions').select('notes').eq('id',sid).single();
-    if(session&&session.notes){document.getElementById('conv-notes').classList.remove('hidden');document.getElementById('conv-notes-text').textContent=session.notes;}
-    document.getElementById('conv-messages').innerHTML='';(msgs||[]).forEach(m=>{S.convRenderedIds.add(m.id);appendConvMsg(m);});}
-    catch(e){document.getElementById('conv-messages').innerHTML=`<p class="text-avx-error text-sm text-center py-10">Error: ${esc(e.message)}</p>`;}
+    try{
+        const{data:msgs,error}=await db.from('messages').select('*').eq('session_id',sid).order('created_at',{ascending:true});
+        if(error)throw error;
+        const{data:session}=await db.from('sessions').select('notes').eq('id',sid).single();
+        if(session&&session.notes){document.getElementById('conv-notes').classList.remove('hidden');document.getElementById('conv-notes-text').textContent=session.notes;}
+        document.getElementById('conv-messages').innerHTML='';
+        (msgs||[]).forEach(m=>{S.convRenderedIds.add(m.id);appendConvMsg(m);});
+    }catch(e){document.getElementById('conv-messages').innerHTML=`<p class="text-avx-error text-sm text-center py-10">Error: ${esc(e.message)}</p>`;}
 }
 function appendConvMsg(m){
-    const c=document.getElementById('conv-messages'),d=document.createElement('div');d.className='msg-enter flex '+(m.sender_role==='user'?'justify-end':'justify-start');const t=fmtT(m.created_at);
+    const c=document.getElementById('conv-messages'),d=document.createElement('div');
+    d.className='msg-enter flex '+(m.sender_role==='user'?'justify-end':'justify-start');
+    const t=fmtT(m.created_at);
     if(m.sender_role==='user')d.innerHTML=`<div class="max-w-[75%]"><div class="bg-avx-accent/15 border border-avx-accent/20 rounded-2xl rounded-br-md px-4 py-2.5"><p class="text-sm text-avx-text">${esc(m.content)}</p></div><p class="text-[10px] text-avx-muted/50 text-right mt-1">${t}</p></div>`;
-    else d.innerHTML=`<div class="max-w-[85%]"><div class="flex items-start gap-2"><div class="w-6 h-6 rounded-md bg-avx-accent/10 flex items-center justify-center shrink-0"><i class="fa-solid fa-print text-avx-accent text-[9px]"></i></div><div class="bg-avx-card border border-avx-border rounded-2xl rounded-bl-md px-4 py-2.5"><div class="text-sm text-avx-text leading-relaxed">${m.content}</div></div></div><p class="text-[10px] text-avx-muted/50 mt-1 ml-8">${t}</p></div>`;
+    else d.innerHTML=`<div class="max-w-[80%]"><div class="flex items-start gap-2"><div class="w-6 h-6 rounded-md bg-avx-accent/10 flex items-center justify-center shrink-0"><i class="fa-solid fa-print text-avx-accent text-[9px]"></i></div><div class="bg-avx-card border border-avx-border rounded-2xl rounded-bl-md px-4 py-2.5"><p class="text-sm text-avx-text leading-relaxed">${m.content}</p></div></div><p class="text-[10px] text-avx-muted/50 mt-1 ml-8">${t}</p></div>`;
     c.appendChild(d);c.scrollTop=c.scrollHeight;
 }
 function closeConvModal(){document.getElementById('conv-modal').classList.add('hidden');cleanupConvChannel();}
@@ -1003,31 +638,75 @@ function closeConvModal(){document.getElementById('conv-modal').classList.add('h
 // ==============================================
 function openIncidentModal(){document.getElementById('inc-category').value='complaint';document.getElementById('inc-desc').value='';document.getElementById('incident-modal').classList.remove('hidden');}
 function closeIncidentModal(){document.getElementById('incident-modal').classList.add('hidden');}
-async function submitIncident(){const cat=document.getElementById('inc-category').value,desc=document.getElementById('inc-desc').value.trim();if(!desc)return showToast('Please describe the incident','warning');try{const{error}=await db.from('incidents').insert({user_id:S.profile.id,category:cat,description:desc});if(error)throw error;closeIncidentModal();showToast('Incident reported','success');}catch(e){showToast('Failed: '+e.message,'error');}}
+async function submitIncident(){
+    const cat=document.getElementById('inc-category').value,desc=document.getElementById('inc-desc').value.trim();
+    if(!desc)return showToast('Please describe the incident','warning');
+    try{const{error}=await db.from('incidents').insert({user_id:S.profile.id,category:cat,description:desc});if(error)throw error;closeIncidentModal();showToast('Incident reported','success');}
+    catch(e){showToast('Failed: '+e.message,'error');}
+}
 
 // ==============================================
 // 12. KB MODAL
 // ==============================================
-function openKbModal(id,cat,kw,q,a,p){document.getElementById('kb-edit-id').value=id||'';document.getElementById('kb-cat').value=cat||'';document.getElementById('kb-keywords').value=kw||'';document.getElementById('kb-question').value=q||'';document.getElementById('kb-answer').value=a||'';document.getElementById('kb-priority').value=p||5;document.getElementById('kb-modal-title').textContent=id?'Edit Knowledge':'Add Knowledge';document.getElementById('kb-modal').classList.remove('hidden');}
+function openKbModal(id,cat,kw,q,a,p){
+    document.getElementById('kb-edit-id').value=id||'';document.getElementById('kb-cat').value=cat||'';document.getElementById('kb-keywords').value=kw||'';document.getElementById('kb-question').value=q||'';document.getElementById('kb-answer').value=a||'';document.getElementById('kb-priority').value=p||5;
+    document.getElementById('kb-modal-title').textContent=id?'Edit Knowledge':'Add Knowledge';document.getElementById('kb-modal').classList.remove('hidden');
+}
 function closeKbModal(){document.getElementById('kb-modal').classList.add('hidden');}
-async function saveKbEntry(){const id=document.getElementById('kb-edit-id').value,cat=document.getElementById('kb-cat').value.trim(),kw=document.getElementById('kb-keywords').value.split(',').map(s=>s.trim()).filter(Boolean),q=document.getElementById('kb-question').value.trim(),a=document.getElementById('kb-answer').value.trim(),p=parseInt(document.getElementById('kb-priority').value)||5;if(!q||!a)return showToast('Question and answer are required','warning');try{if(id){const{error}=await db.from('knowledge_base').update({category:cat,keywords:kw,question:q,answer:a,priority:p}).eq('id',id);if(error)throw error;}else{const{error}=await db.from('knowledge_base').insert({category:cat,keywords:kw,question:q,answer:a,priority:p});if(error)throw error;}kbCache=null;kbCacheTime=0;closeKbModal();showToast('Knowledge entry saved','success');if(S.supView==='knowledge')renderKnowledge(document.getElementById('sup-content'));}catch(e){showToast('Failed: '+e.message,'error');}}
-async function deleteKbEntry(id){showConfirm('Delete entry?','This cannot be undone.',async()=>{try{await db.from('knowledge_base').update({active:false}).eq('id',id);kbCache=null;kbCacheTime=0;showToast('Entry deleted','success');if(S.supView==='knowledge')renderKnowledge(document.getElementById('sup-content'));}catch(e){showToast('Failed: '+e.message,'error');}});}
-async function importCSV(){const raw=document.getElementById('import-csv').value.trim();if(!raw)return showToast('Paste CSV content first','warning');const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);if(lines.length<2)return showToast('CSV needs a header row + data','warning');const header=lines[0].split(',').map(s=>s.trim().replace(/^"|"$/g,''));const rows=lines.slice(1).map(l=>{const vals=[];let cur='',inQ=false;for(const ch of l){if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}else{cur+=ch;}}vals.push(cur.trim());return vals;});const entries=rows.map(r=>({category:r[header.indexOf('category')]||'',keywords:(r[header.indexOf('keywords')]||'').split(',').map(s=>s.trim()).filter(Boolean),question:r[header.indexOf('question')]||'',answer:r[header.indexOf('answer')]||'',priority:parseInt(r[header.indexOf('priority')])||5}));try{const{error}=await db.from('knowledge_base').insert(entries);if(error)throw error;kbCache=null;kbCacheTime=0;document.getElementById('import-modal').classList.add('hidden');showToast(`${entries.length} entries imported`,'success');if(S.supView==='knowledge')renderKnowledge(document.getElementById('sup-content'));}catch(e){showToast('Import failed: '+e.message,'error');}}
+async function saveKbEntry(){
+    const id=document.getElementById('kb-edit-id').value,cat=document.getElementById('kb-cat').value.trim(),kw=document.getElementById('kb-keywords').value.split(',').map(s=>s.trim()).filter(Boolean),q=document.getElementById('kb-question').value.trim(),a=document.getElementById('kb-answer').value.trim(),p=parseInt(document.getElementById('kb-priority').value)||5;
+    if(!q||!a)return showToast('Question and answer are required','warning');
+    try{if(id){const{error}=await db.from('knowledge_base').update({category:cat,keywords:kw,question:q,answer:a,priority:p}).eq('id',id);if(error)throw error;}else{const{error}=await db.from('knowledge_base').insert({category:cat,keywords:kw,question:q,answer:a,priority:p});if(error)throw error;}
+    kbCache=null;kbCacheTime=0;closeKbModal();showToast('Knowledge entry saved','success');if(S.supView==='knowledge')renderKnowledge(document.getElementById('sup-content'));}
+    catch(e){showToast('Failed: '+e.message,'error');}
+}
+async function deleteKbEntry(id){
+    showConfirm('Delete entry?','This cannot be undone.',async()=>{try{await db.from('knowledge_base').update({active:false}).eq('id',id);kbCache=null;kbCacheTime=0;showToast('Entry deleted','success');if(S.supView==='knowledge')renderKnowledge(document.getElementById('sup-content'));}catch(e){showToast('Failed: '+e.message,'error');}});
+}
+async function importCSV(){
+    const raw=document.getElementById('import-csv').value.trim();if(!raw)return showToast('Paste CSV content first','warning');
+    const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);if(lines.length<2)return showToast('CSV needs a header row + data','warning');
+    const header=lines[0].split(',').map(s=>s.trim().replace(/^"|"$/g,''));const rows=lines.slice(1).map(l=>{const vals=[];let cur='',inQ=false;for(const ch of l){if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}else{cur+=ch;}}vals.push(cur.trim());return vals;});
+    const entries=rows.map(r=>({category:r[header.indexOf('category')]||'',keywords:(r[header.indexOf('keywords')]||'').split(',').map(s=>s.trim()).filter(Boolean),question:r[header.indexOf('question')]||'',answer:r[header.indexOf('answer')]||'',priority:parseInt(r[header.indexOf('priority')])||5}));
+    try{const{error}=await db.from('knowledge_base').insert(entries);if(error)throw error;kbCache=null;kbCacheTime=0;document.getElementById('import-modal').classList.add('hidden');showToast(`${entries.length} entries imported`,'success');if(S.supView==='knowledge')renderKnowledge(document.getElementById('sup-content'));}
+    catch(e){showToast('Import failed: '+e.message,'error');}
+}
 function openImportModal(){document.getElementById('import-csv').value='';document.getElementById('import-modal').classList.remove('hidden');}
 
 // ==============================================
 // 13. SITE MODAL
 // ==============================================
-function openSiteModal(id,name,url,sort){document.getElementById('site-edit-id').value=id||'';document.getElementById('site-name').value=name||'';document.getElementById('site-url').value=url||'';document.getElementById('site-sort').value=sort||0;document.getElementById('site-modal-title').textContent=id?'Edit Site':'Add Site';document.getElementById('site-modal').classList.remove('hidden');}
+function openSiteModal(id,name,url,sort){
+    document.getElementById('site-edit-id').value=id||'';document.getElementById('site-name').value=name||'';document.getElementById('site-url').value=url||'';document.getElementById('site-sort').value=sort||0;
+    document.getElementById('site-modal-title').textContent=id?'Edit Site':'Add Site';document.getElementById('site-modal').classList.remove('hidden');
+}
 function closeSiteModal(){document.getElementById('site-modal').classList.add('hidden');}
-async function saveSite(){const id=document.getElementById('site-edit-id').value,name=document.getElementById('site-name').value.trim(),url=document.getElementById('site-url').value.trim(),sort=parseInt(document.getElementById('site-sort').value)||0;if(!name)return showToast('Site name is required','warning');try{if(id){const{error}=await db.from('product_sites').update({name,url,sort_order:sort}).eq('id',id);if(error)throw error;}else{const{error}=await db.from('product_sites').insert({name,url,sort_order:sort});if(error)throw error;}sitesCache=null;sitesCacheTime=0;closeSiteModal();showToast('Site saved','success');if(S.supView==='sites')renderSites(document.getElementById('sup-content'));}catch(e){showToast('Failed: '+e.message,'error');}}
-async function deleteSite(id){showConfirm('Delete site?','This will deactivate the site.',async()=>{try{await db.from('product_sites').update({active:false}).eq('id',id);sitesCache=null;sitesCacheTime=0;showToast('Site deleted','success');if(S.supView==='sites')renderSites(document.getElementById('sup-content'));}catch(e){showToast('Failed: '+e.message,'error');}});}
+async function saveSite(){
+    const id=document.getElementById('site-edit-id').value,name=document.getElementById('site-name').value.trim(),url=document.getElementById('site-url').value.trim(),sort=parseInt(document.getElementById('site-sort').value)||0;
+    if(!name)return showToast('Site name is required','warning');
+    try{if(id){const{error}=await db.from('product_sites').update({name,url,sort_order:sort}).eq('id',id);if(error)throw error;}else{const{error}=await db.from('product_sites').insert({name,url,sort_order:sort});if(error)throw error;}
+    sitesCache=null;sitesCacheTime=0;closeSiteModal();showToast('Site saved','success');if(S.supView==='sites')renderSites(document.getElementById('sup-content'));}
+    catch(e){showToast('Failed: '+e.message,'error');}
+}
+async function deleteSite(id){
+    showConfirm('Delete site?','This will deactivate the site.',async()=>{try{await db.from('product_sites').update({active:false}).eq('id',id);sitesCache=null;sitesCacheTime=0;showToast('Site deleted','success');if(S.supView==='sites')renderSites(document.getElementById('sup-content'));}catch(e){showToast('Failed: '+e.message,'error');}});
+}
 
 // ==============================================
 // 14. QUICK LINKS
 // ==============================================
-async function toggleQuickLinks(){const p=document.getElementById('quick-links-panel');p.classList.toggle('hidden');if(!p.classList.contains('hidden')){const sites=await loadSites();const sel=document.getElementById('ql-site-filter');const cv=sel.value;sel.innerHTML='<option value="">All Sites</option>'+sites.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');if(cv)sel.value=cv;loadQuickLinks();}}
-async function loadQuickLinks(){const filter=document.getElementById('ql-site-filter').value;const sites=await loadSites();const filtered=filter?sites.filter(s=>s.name===filter):sites;const c=document.getElementById('ql-content');if(!filtered||!filtered.length){c.innerHTML='<p class="text-center text-avx-muted text-xs py-8">No sites found</p>';return;}c.innerHTML=filtered.map(s=>`<a href="${esc(s.url||'#')}" target="_blank" class="block bg-avx-card border border-avx-border rounded-xl p-3 site-card"><div class="flex items-center gap-2"><i class="fa-solid fa-arrow-up-right-from-square text-avx-accent text-xs"></i><span class="text-sm font-medium text-avx-text">${esc(s.name)}</span></div>${s.url?`<p class="text-xs text-avx-muted mt-1 truncate">${esc(s.url)}</p>`:''}</a>`).join('');}
+async function toggleQuickLinks(){
+    const p=document.getElementById('quick-links-panel');p.classList.toggle('hidden');
+    if(!p.classList.contains('hidden')){const sites=await loadSites();const sel=document.getElementById('ql-site-filter');const cv=sel.value;sel.innerHTML='<option value="">All Sites</option>'+sites.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');if(cv)sel.value=cv;loadQuickLinks();}
+}
+async function loadQuickLinks(){
+    const filter=document.getElementById('ql-site-filter').value;
+    const sites=await loadSites();
+    const filtered=filter?sites.filter(s=>s.name===filter):sites;
+    const c=document.getElementById('ql-content');
+    if(!filtered||!filtered.length){c.innerHTML='<p class="text-center text-avx-muted text-xs py-8">No sites found</p>';return;}
+    c.innerHTML=filtered.map(s=>`<a href="${esc(s.url||'#')}" target="_blank" class="block bg-avx-card border border-avx-border rounded-xl p-3 site-card"><div class="flex items-center gap-2"><i class="fa-solid fa-arrow-up-right-from-square text-avx-accent text-xs"></i><span class="text-sm font-medium text-avx-text">${esc(s.name)}</span></div>${s.url?`<p class="text-xs text-avx-muted mt-1 truncate">${esc(s.url)}</p>`:''}</a>`).join('');
+}
 
 // ==============================================
 // 15. MOBILE SIDEBAR
@@ -1035,9 +714,12 @@ async function loadQuickLinks(){const filter=document.getElementById('ql-site-fi
 function toggleSupSidebar(){document.getElementById('sup-sidebar').classList.toggle('open');}
 
 // ==============================================
-// 16. KEYBOARD SHORTCUTS
+// 16. KEYBOARD SHORTCUT — Ctrl+R / F5 = manual refresh
 // ==============================================
-document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='r'){e.preventDefault();manualRefresh();}if(e.key==='F5'){e.preventDefault();manualRefresh();}});
+document.addEventListener('keydown',e=>{
+    if((e.ctrlKey||e.metaKey)&&e.key==='r'){e.preventDefault();manualRefresh();}
+    if(e.key==='F5'){e.preventDefault();manualRefresh();}
+});
 </script>
 </body>
 </html>
