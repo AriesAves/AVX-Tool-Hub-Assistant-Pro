@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1a1a2e">
+    <meta name="theme-color" content="#080D1A">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>AVX Tool HUB Assistant PRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -12,94 +12,92 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Quill.js WYSIWYG Editor -->
     <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
     <script>
-        tailwind.config={theme:{extend:{fontFamily:{display:['Space Grotesk','sans-serif'],body:['DM Sans','sans-serif']},colors:{avx:{bg:'#0D1117',surface:'#161B22',card:'#1C2333',border:'#30363D',accent:'#3B82F6','accent-h':'#2563EB',text:'#E6EDF3',muted:'#7D8590',success:'#3FB950',error:'#F85149',info:'#58A6FF'}}}}}
+        tailwind.config={theme:{extend:{fontFamily:{display:['Space Grotesk','sans-serif'],body:['DM Sans','sans-serif']},colors:{avx:{bg:'#080D1A',surface:'#0E1525',card:'#141E33',border:'#1C2B45',accent:'#4B8BF5','accent-h':'#3570D4',text:'#E6EBF5',muted:'#7B89A5',success:'#4ADE80',error:'#F87171',info:'#60A5FA'}}}}}
     </script>
     <style>
-        *{box-sizing:border-box}body{font-family:'DM Sans',sans-serif;background:#0D1117;color:#E6EDF3;margin:0;overflow:hidden;height:100vh}h1,h2,h3,h4,h5,h6{font-family:'Space Grotesk',sans-serif}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#30363D;border-radius:3px}
+        *{box-sizing:border-box}body{font-family:'DM Sans',sans-serif;background:#080D1A;color:#E6EBF5;margin:0;overflow:hidden;height:100vh}h1,h2,h3,h4,h5,h6{font-family:'Space Grotesk',sans-serif}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#1C2B45;border-radius:3px}
         .bg-orb{position:absolute;border-radius:50%;filter:blur(100px);opacity:.12;pointer-events:none}
-        .bg-orb-1{width:500px;height:500px;background:#3B82F6;top:-150px;left:-100px;animation:om1 25s infinite ease-in-out}
-        .bg-orb-2{width:400px;height:400px;background:#60A5FA;bottom:-100px;right:-80px;animation:om2 30s infinite ease-in-out}
-        .bg-orb-3{width:300px;height:300px;background:#3B82F6;top:50%;left:60%;animation:om3 20s infinite ease-in-out}
+        .bg-orb-1{width:500px;height:500px;background:#2563EB;top:-150px;left:-100px;animation:om1 25s infinite ease-in-out}
+        .bg-orb-2{width:400px;height:400px;background:#3B82F6;bottom:-100px;right:-80px;animation:om2 30s infinite ease-in-out}
+        .bg-orb-3{width:300px;height:300px;background:#1D4ED8;top:50%;left:60%;animation:om3 20s infinite ease-in-out}
         @keyframes om1{0%,100%{transform:translate(0,0)}33%{transform:translate(60px,80px)}66%{transform:translate(-40px,40px)}}
         @keyframes om2{0%,100%{transform:translate(0,0)}33%{transform:translate(-50px,-60px)}66%{transform:translate(30px,-30px)}}
         @keyframes om3{0%,100%{transform:translate(0,0)}50%{transform:translate(-80px,50px)}}
         .page-enter{animation:pgIn .45s ease-out}@keyframes pgIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
         .msg-enter{animation:msIn .3s ease-out}@keyframes msIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-        .typing-dot{width:7px;height:7px;border-radius:50%;background:#7D8590;display:inline-block;animation:tb 1.4s infinite ease-in-out}
+        .typing-dot{width:7px;height:7px;border-radius:50%;background:#7B89A5;display:inline-block;animation:tb 1.4s infinite ease-in-out}
         .typing-dot:nth-child(2){animation-delay:.2s}.typing-dot:nth-child(3){animation-delay:.4s}
         @keyframes tb{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
         .toast-in{animation:tsIn .35s ease-out}.toast-out{animation:tsOut .3s ease-in forwards}
         @keyframes tsIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
         @keyframes tsOut{to{opacity:0;transform:translateX(40px)}}
-        .accent-line{height:2px;background:linear-gradient(90deg,transparent,#3B82F6,transparent)}
-        .btn-glow{box-shadow:0 0 20px rgba(59,130,246,.15);transition:box-shadow .3s}
-        .btn-glow:hover{box-shadow:0 0 30px rgba(59,130,246,.3)}
+        .accent-line{height:2px;background:linear-gradient(90deg,transparent,#4B8BF5,transparent)}
+        .btn-glow{box-shadow:0 0 20px rgba(75,139,245,.15);transition:box-shadow .3s}
+        .btn-glow:hover{box-shadow:0 0 30px rgba(75,139,245,.3)}
         .nav-item{transition:all .2s;border-left:3px solid transparent}
-        .nav-item:hover{background:rgba(59,130,246,.06)}
-        .nav-item.active{background:rgba(59,130,246,.1);border-left-color:#3B82F6;color:#3B82F6}
+        .nav-item:hover{background:rgba(75,139,245,.06)}
+        .nav-item.active{background:rgba(75,139,245,.1);border-left-color:#4B8BF5;color:#4B8BF5}
         .hover-card{transition:transform .2s,box-shadow .2s}
         .hover-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
         .modal-backdrop{background:rgba(0,0,0,.7);backdrop-filter:blur(4px)}
-        .pulse-ring{animation:pr 2s infinite}@keyframes pr{0%{box-shadow:0 0 0 0 rgba(59,130,246,.4)}70%{box-shadow:0 0 0 10px rgba(59,130,246,0)}100%{box-shadow:0 0 0 0 rgba(59,130,246,0)}}
+        .pulse-ring{animation:pr 2s infinite}@keyframes pr{0%{box-shadow:0 0 0 0 rgba(75,139,245,.4)}70%{box-shadow:0 0 0 10px rgba(75,139,245,0)}100%{box-shadow:0 0 0 0 rgba(75,139,245,0)}}
         .ch-badge{font-size:.65rem;padding:2px 8px;border-radius:9999px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-        input:focus,select:focus,textarea:focus{outline:none;border-color:#3B82F6!important;box-shadow:0 0 0 2px rgba(59,130,246,.15)}
-        .auth-tab{transition:all .2s;border-bottom:2px solid transparent;color:#7D8590}
-        .auth-tab.active{color:#3B82F6;border-bottom-color:#3B82F6}
+        input:focus,select:focus,textarea:focus{outline:none;border-color:#4B8BF5!important;box-shadow:0 0 0 2px rgba(75,139,245,.15)}
+        .auth-tab{transition:all .2s;border-bottom:2px solid transparent;color:#7B89A5}
+        .auth-tab.active{color:#4B8BF5;border-bottom-color:#4B8BF5}
         .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-        .status-open{background:#F85149}.status-progress{background:#3B82F6}.status-resolved{background:#3FB950}
+        .status-open{background:#F87171}.status-progress{background:#4B8BF5}.status-resolved{background:#4ADE80}
         .kb-cat-tag{font-size:.65rem;padding:2px 8px;border-radius:9999px;font-weight:500}
-        .site-card{transition:all .2s}.site-card:hover{border-color:rgba(59,130,246,.3);transform:translateY(-1px)}
-        .manual-refresh-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.25);border-radius:8px;color:#3B82F6;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
-        .manual-refresh-btn:hover{background:rgba(59,130,246,.2);border-color:rgba(59,130,246,.4)}
+        .site-card{transition:all .2s}.site-card:hover{border-color:rgba(75,139,245,.3);transform:translateY(-1px)}
+        .manual-refresh-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(75,139,245,.12);border:1px solid rgba(75,139,245,.25);border-radius:8px;color:#4B8BF5;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+        .manual-refresh-btn:hover{background:rgba(75,139,245,.2);border-color:rgba(75,139,245,.4)}
         .manual-refresh-btn:active{transform:scale(.96)}
         .manual-refresh-btn .spin-icon{transition:transform .5s ease}
         .manual-refresh-btn.spinning .spin-icon{transform:rotate(360deg)}
-        .refresh-timestamp{font-size:10px;color:#7D8590;display:flex;align-items:center;gap:4px;white-space:nowrap}
-        .sugg-section{margin-top:10px;padding-top:10px;border-top:1px solid rgba(48,54,61,.6)}
-        .sugg-label{font-size:11px;color:#7D8590;margin-bottom:6px;display:flex;align-items:center;gap:5px}
+        .refresh-timestamp{font-size:10px;color:#7B89A5;display:flex;align-items:center;gap:4px;white-space:nowrap}
+        .sugg-section{margin-top:10px;padding-top:10px;border-top:1px solid rgba(28,43,69,.6)}
+        .sugg-label{font-size:11px;color:#7B89A5;margin-bottom:6px;display:flex;align-items:center;gap:5px}
         .sugg-chips{display:flex;flex-wrap:wrap;gap:5px}
-        .sugg-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;border:1px solid rgba(59,130,246,.2);background:rgba(59,130,246,.06);color:#3B82F6}
-        .sugg-chip:hover{background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.4);transform:translateY(-1px)}
-        .sugg-chip.blue{border-color:rgba(88,166,255,.2);background:rgba(88,166,255,.06);color:#58A6FF}
-        .sugg-chip.blue:hover{background:rgba(88,166,255,.15);border-color:rgba(88,166,255,.4)}
-        .sugg-chip.green{border-color:rgba(63,185,80,.2);background:rgba(63,185,80,.06);color:#3FB950}
-        .sugg-chip.green:hover{background:rgba(63,185,80,.15);border-color:rgba(63,185,80,.4)}
+        .sugg-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;border:1px solid rgba(75,139,245,.2);background:rgba(75,139,245,.06);color:#4B8BF5}
+        .sugg-chip:hover{background:rgba(75,139,245,.15);border-color:rgba(75,139,245,.4);transform:translateY(-1px)}
+        .sugg-chip.blue{border-color:rgba(96,165,250,.2);background:rgba(96,165,250,.06);color:#60A5FA}
+        .sugg-chip.blue:hover{background:rgba(96,165,250,.15);border-color:rgba(96,165,250,.4)}
+        .sugg-chip.green{border-color:rgba(74,222,128,.2);background:rgba(74,222,128,.06);color:#4ADE80}
+        .sugg-chip.green:hover{background:rgba(74,222,128,.15);border-color:rgba(74,222,128,.4)}
         .sugg-chip i{font-size:9px}
-        .alt-section{margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(88,166,255,.05);border:1px solid rgba(88,166,255,.1)}
-        .alt-section p{font-size:11px;color:#58A6FF;margin-bottom:5px;font-weight:500}
+        .alt-section{margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(96,165,250,.05);border:1px solid rgba(96,165,250,.1)}
+        .alt-section p{font-size:11px;color:#60A5FA;margin-bottom:5px;font-weight:500}
         .resp-body p{margin-bottom:6px}.resp-body p:last-child{margin-bottom:0}
-        .resp-body strong{color:#3B82F6;font-weight:600}
+        .resp-body strong{color:#4B8BF5;font-weight:600}
         .resp-body ul{margin:4px 0 8px 16px;list-style:disc}.resp-body li{margin-bottom:3px;font-size:13px}
-        .kb-filter-select{background:#1C2333;border:1px solid #30363D;border-radius:8px;padding:6px 30px 6px 10px;color:#E6EDF3;font-size:12px;appearance:none;cursor:pointer;transition:border-color .2s}
-        .kb-filter-select:focus{border-color:#3B82F6;outline:none;box-shadow:0 0 0 2px rgba(59,130,246,.15)}
-        /* Quill Editor Custom Styles */
-        .ql-toolbar.ql-snow{border-color:#30363D!important;border-radius:8px 8px 0 0;background:#1C2333}
-        .ql-container.ql-snow{border-color:#30363D!important;border-radius:0 0 8px 8px;font-family:'DM Sans',sans-serif;font-size:14px;background:#1C2333;color:#E6EDF3;min-height:200px;max-height:350px}
+        .kb-filter-select{background:#141E33;border:1px solid #1C2B45;border-radius:8px;padding:6px 30px 6px 10px;color:#E6EBF5;font-size:12px;appearance:none;cursor:pointer;transition:border-color .2s}
+        .kb-filter-select:focus{border-color:#4B8BF5;outline:none;box-shadow:0 0 0 2px rgba(75,139,245,.15)}
+        .ql-toolbar.ql-snow{border-color:#1C2B45!important;border-radius:8px 8px 0 0;background:#141E33}
+        .ql-container.ql-snow{border-color:#1C2B45!important;border-radius:0 0 8px 8px;font-family:'DM Sans',sans-serif;font-size:14px;background:#141E33;color:#E6EBF5;min-height:200px;max-height:350px}
         .ql-editor{min-height:200px;max-height:350px;overflow-y:auto}
-        .ql-snow .ql-stroke{stroke:#7D8590!important}
-        .ql-snow .ql-fill{fill:#7D8590!important}
-        .ql-snow .ql-picker{color:#7D8590!important}
-        .ql-snow .ql-picker-options{background:#1C2333;border-color:#30363D!important}
-        .ql-snow.ql-toolbar button:hover,.ql-snow .ql-toolbar button:hover,.ql-snow.ql-toolbar button:focus,.ql-snow .ql-toolbar button:focus,.ql-snow.ql-toolbar button.ql-active,.ql-snow .ql-toolbar button.ql-active,.ql-snow.ql-toolbar .ql-picker-label:hover,.ql-snow .ql-toolbar .ql-picker-label:hover,.ql-snow.ql-toolbar .ql-picker-label.ql-active,.ql-snow .ql-toolbar .ql-picker-label.ql-active{border-color:#3B82F6!important}
-        .ql-snow.ql-toolbar button:hover .ql-stroke,.ql-snow .ql-toolbar button:hover .ql-stroke,.ql-snow.ql-toolbar button:focus .ql-stroke,.ql-snow .ql-toolbar button:focus .ql-stroke,.ql-snow.ql-toolbar button.ql-active .ql-stroke,.ql-snow .ql-toolbar button.ql-active .ql-stroke{stroke:#3B82F6!important}
-        .ql-snow.ql-toolbar button:hover .ql-fill,.ql-snow .ql-toolbar button:hover .ql-fill,.ql-snow.ql-toolbar button:focus .ql-fill,.ql-snow .ql-toolbar button:focus .ql-fill,.ql-snow.ql-toolbar button.ql-active .ql-fill,.ql-snow .ql-toolbar button.ql-active .ql-fill{fill:#3B82F6!important}
-        .ql-snow .ql-picker.ql-expanded .ql-picker-label{border-color:#3B82F6!important;color:#3B82F6!important}
-        .ql-editor.ql-blank::before{color:#7D8590!important;font-style:normal!important}
-        .ql-tooltip{background:#1C2333!important;border-color:#30363D!important;color:#E6EDF3!important;border-radius:8px}
-        .ql-tooltip input[type="text"]{background:#0D1117!important;border-color:#30363D!important;color:#E6EDF3!important;border-radius:4px}
-        .ql-tooltip .ql-action{background:#3B82F6!important;color:#fff!important;border-radius:4px}
-        .ql-tooltip .ql-action:hover{background:#2563EB!important}
-        .ql-editor h1{color:#E6EDF3;font-size:1.75em}
-        .ql-editor h2{color:#E6EDF3;font-size:1.5em}
-        .ql-editor h3{color:#E6EDF3;font-size:1.25em}
-        .ql-editor h4{color:#E6EDF3;font-size:1.1em}
-        .ql-editor h5,.ql-editor h6{color:#E6EDF3;font-size:1em}
-        .ql-editor a{color:#58A6FF!important}
-        .ql-editor blockquote{border-left:3px solid #3B82F6;padding-left:12px;color:#7D8590}
+        .ql-snow .ql-stroke{stroke:#7B89A5!important}
+        .ql-snow .ql-fill{fill:#7B89A5!important}
+        .ql-snow .ql-picker{color:#7B89A5!important}
+        .ql-snow .ql-picker-options{background:#141E33;border-color:#1C2B45!important}
+        .ql-snow.ql-toolbar button:hover,.ql-snow .ql-toolbar button:hover,.ql-snow.ql-toolbar button:focus,.ql-snow .ql-toolbar button:focus,.ql-snow.ql-toolbar button.ql-active,.ql-snow .ql-toolbar button.ql-active,.ql-snow.ql-toolbar .ql-picker-label:hover,.ql-snow .ql-toolbar .ql-picker-label:hover,.ql-snow.ql-toolbar .ql-picker-label.ql-active,.ql-snow .ql-toolbar .ql-picker-label.ql-active{border-color:#4B8BF5!important}
+        .ql-snow.ql-toolbar button:hover .ql-stroke,.ql-snow .ql-toolbar button:hover .ql-stroke,.ql-snow.ql-toolbar button:focus .ql-stroke,.ql-snow.ql-toolbar button:focus .ql-stroke,.ql-snow.ql-toolbar button.ql-active .ql-stroke,.ql-snow.ql-toolbar button.ql-active .ql-stroke{stroke:#4B8BF5!important}
+        .ql-snow.ql-toolbar button:hover .ql-fill,.ql-snow .ql-toolbar button:hover .ql-fill,.ql-snow.ql-toolbar button:focus .ql-fill,.ql-snow .ql-toolbar button:focus .ql-fill,.ql-snow.ql-toolbar button.ql-active .ql-fill,.ql-snow .ql-toolbar button.ql-active .ql-fill{fill:#4B8BF5!important}
+        .ql-snow .ql-picker.ql-expanded .ql-picker-label{border-color:#4B8BF5!important;color:#4B8BF5!important}
+        .ql-editor.ql-blank::before{color:#7B89A5!important;font-style:normal!important}
+        .ql-tooltip{background:#141E33!important;border-color:#1C2B45!important;color:#E6EBF5!important;border-radius:8px}
+        .ql-tooltip input[type="text"]{background:#080D1A!important;border-color:#1C2B45!important;color:#E6EBF5!important;border-radius:4px}
+        .ql-tooltip .ql-action{background:#4B8BF5!important;color:#fff!important;border-radius:4px}
+        .ql-tooltip .ql-action:hover{background:#3570D4!important}
+        .ql-editor h1{color:#E6EBF5;font-size:1.75em}
+        .ql-editor h2{color:#E6EBF5;font-size:1.5em}
+        .ql-editor h3{color:#E6EBF5;font-size:1.25em}
+        .ql-editor h4{color:#E6EBF5;font-size:1.1em}
+        .ql-editor h5,.ql-editor h6{color:#E6EBF5;font-size:1em}
+        .ql-editor a{color:#60A5FA!important}
+        .ql-editor blockquote{border-left:3px solid #4B8BF5;padding-left:12px;color:#7B89A5}
         @media(max-width:768px){#sup-sidebar{position:fixed;left:-260px;top:0;bottom:0;z-index:40;transition:left .3s}#sup-sidebar.open{left:0}#sup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:35}#sup-sidebar.open~#sup-overlay{display:block}}
     </style>
 </head>
@@ -269,7 +267,7 @@
     </div>
 </div>
 
-<!-- KB EDIT MODAL - with WYSIWYG Editor -->
+<!-- KB EDIT MODAL -->
 <div id="kb-modal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
     <div class="bg-avx-surface border border-avx-border rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col page-enter shadow-2xl">
         <div class="flex items-center justify-between px-5 py-4 border-b border-avx-border shrink-0"><h3 id="kb-modal-title" class="font-display font-semibold text-avx-text">Add Knowledge</h3><button onclick="closeKbModal()" class="w-8 h-8 rounded-lg hover:bg-avx-card flex items-center justify-center text-avx-muted hover:text-avx-text transition-all"><i class="fa-solid fa-xmark"></i></button></div>
@@ -278,13 +276,9 @@
             <div><label class="block text-xs font-medium text-avx-muted mb-1.5">Category</label><input id="kb-cat" type="text" placeholder="e.g. color, paper, pricing" class="w-full bg-avx-card border border-avx-border rounded-lg px-3 py-2 text-avx-text text-sm placeholder-avx-muted/40"></div>
             <div><label class="block text-xs font-medium text-avx-muted mb-1.5">Keywords <span class="text-avx-muted/40">(comma-separated)</span></label><input id="kb-keywords" type="text" placeholder="cmyk, rgb, color mode" class="w-full bg-avx-card border border-avx-border rounded-lg px-3 py-2 text-avx-text text-sm placeholder-avx-muted/40"></div>
             <div><label class="block text-xs font-medium text-avx-muted mb-1.5">Question / Trigger</label><input id="kb-question" type="text" placeholder="What color mode should I use?" class="w-full bg-avx-card border border-avx-border rounded-lg px-3 py-2 text-avx-text text-sm placeholder-avx-muted/40"></div>
-            <!-- WYSIWYG Editor Container -->
             <div>
                 <label class="block text-xs font-medium text-avx-muted mb-1.5">Answer <span class="text-avx-muted/40">(Use toolbar to format)</span></label>
-                <div id="kb-editor-wrapper" class="rounded-lg overflow-hidden">
-                    <!-- Quill toolbar will be injected here -->
-                    <div id="kb-answer-editor"></div>
-                </div>
+                <div id="kb-editor-wrapper" class="rounded-lg overflow-hidden"><div id="kb-answer-editor"></div></div>
             </div>
             <div><label class="block text-xs font-medium text-avx-muted mb-1.5">Priority <span class="text-avx-muted/40">(0-10)</span></label><input id="kb-priority" type="number" min="0" max="10" value="5" class="w-24 bg-avx-card border border-avx-border rounded-lg px-3 py-2 text-avx-text text-sm"></div>
             <button onclick="saveKbEntry()" class="w-full bg-avx-accent hover:bg-avx-accent-h text-white font-semibold py-2.5 rounded-lg text-sm transition-all"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Entry</button>
@@ -320,153 +314,57 @@ color,"cmyk,rgb","What color mode?","Use CMYK...",8</code></div>
 </div>
 
 <script>
-    <script>
-// ==============================================
-// 1. SUPABASE INIT
-// ==============================================
 const SUPABASE_URL='https://bijbeczbnvareimpfkry.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpamJlY3pibnZhcmVpbXBma3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwMzM3MjgsImV4cCI6MjA5NzYwOTcyOH0.6-SsM5r6LTnW8DUPhz05uYAc-reYE6YC2q9KoU4WDBU';
 let db;
 try{const{createClient}=supabase;db=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){console.error('Supabase init failed:',e);db=null;}
 
-// ==============================================
-// 1b. WYSIWYG EDITOR INIT
-// ==============================================
-let kbQuillEditor = null;
+let kbQuillEditor=null;
+function initKbEditor(content=''){if(kbQuillEditor){kbQuillEditor.off('text-change');kbQuillEditor=null;}kbQuillEditor=new Quill('#kb-answer-editor',{theme:'snow',placeholder:'Write your answer here... Use the toolbar to format text, add links, lists, and more!',modules:{toolbar:[[{header:[1,2,3,4,5,6,false]}],['bold','italic','underline','strike'],[{list:'ordered'},{list:'bullet'}],[{align:[]}],['link','image'],['clean']]}});if(content){const d=content.replace(/&lt;strong&gt;/g,'<strong>').replace(/&lt;\/strong&gt;/g,'</strong>').replace(/&lt;em&gt;/g,'<em>').replace(/&lt;\/em&gt;/g,'</em>').replace(/&lt;u&gt;/g,'<u>').replace(/&lt;\/u&gt;/g,'</u>').replace(/&lt;s&gt;/g,'<s>').replace(/&lt;\/s&gt;/g,'</s>');kbQuillEditor.root.innerHTML=d;}kbQuillEditor.on('text-change',function(){document.getElementById('kb-answer-editor').dataset.content=kbQuillEditor.root.innerHTML;});}
+function getKbEditorContent(){return kbQuillEditor?kbQuillEditor.root.innerHTML:'';}
 
-function initKbEditor(content = '') {
-    if (kbQuillEditor) { kbQuillEditor.off('text-change'); kbQuillEditor = null; }
-    kbQuillEditor = new Quill('#kb-answer-editor', {
-        theme: 'snow',
-        placeholder: 'Write your answer here... Use the toolbar to format text, add links, lists, and more!',
-        modules: {
-            toolbar: [
-                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                ['bold', 'italic', 'underline', 'strike'],
-                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                [{ 'align': [] }],
-                ['link', 'image'],
-                ['clean']
-            ]
-        }
-    });
-    if (content) {
-        const decoded = content
-            .replace(/&lt;strong&gt;/g, '<strong>').replace(/&lt;\/strong&gt;/g, '</strong>')
-            .replace(/&lt;em&gt;/g, '<em>').replace(/&lt;\/em&gt;/g, '</em>')
-            .replace(/&lt;u&gt;/g, '<u>').replace(/&lt;\/u&gt;/g, '</u>')
-            .replace(/&lt;s&gt;/g, '<s>').replace(/&lt;\/s&gt;/g, '</s>');
-        kbQuillEditor.root.innerHTML = decoded;
-    }
-    kbQuillEditor.on('text-change', function() {
-        document.getElementById('kb-answer-editor').dataset.content = kbQuillEditor.root.innerHTML;
-    });
-}
-
-function getKbEditorContent() {
-    return kbQuillEditor ? kbQuillEditor.root.innerHTML : '';
-}
-
-// ==============================================
-// 2. STATE
-// ==============================================
 const S={profile:null,authUser:null,currentSessionId:null,channel:'',supView:'home',renderedMsgIds:new Set(),convRenderedIds:new Set()};
 let msgChannel=null,convChannel=null,refreshCount=0;
 let kbCache=null,kbCacheTime=0;const KB_CACHE_TTL=60000;
 let sitesCache=null,sitesCacheTime=0;const SITES_CACHE_TTL=120000;
 let profileNameCache=null,profileNameCacheTime=0;const PROFILE_CACHE_TTL=30000;
 
-// ==============================================
-// 3. UTILITIES
-// ==============================================
 const esc=s=>{const d=document.createElement('div');d.textContent=s;return d.innerHTML;};
 const now=()=>new Date().toISOString();
 const cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):'';
 const fmtDT=d=>d?new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' '+new Date(d).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}):'—';
 const fmtT=d=>d?new Date(d).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—';
 
-function showToast(msg,type='info'){
-    const c=document.getElementById('toast-container');
-    const cl={success:'border-avx-success/40 bg-avx-success/10 text-avx-success',error:'border-avx-error/40 bg-avx-error/10 text-avx-error',info:'border-avx-info/40 bg-avx-info/10 text-avx-info',warning:'border-avx-accent/40 bg-avx-accent/10 text-avx-accent'};
-    const ic={success:'fa-circle-check',error:'fa-circle-xmark',info:'fa-circle-info',warning:'fa-triangle-exclamation'};
-    const el=document.createElement('div');
-    el.className=`toast-in flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-lg text-sm ${cl[type]||cl.info}`;
-    el.innerHTML=`<i class="fa-solid ${ic[type]||ic.info}"></i><span class="flex-1">${msg}</span>`;
-    c.appendChild(el);setTimeout(()=>{el.classList.replace('toast-in','toast-out');setTimeout(()=>el.remove(),300)},3500);
-}
+function showToast(msg,type='info'){const c=document.getElementById('toast-container');const cl={success:'border-avx-success/40 bg-avx-success/10 text-avx-success',error:'border-avx-error/40 bg-avx-error/10 text-avx-error',info:'border-avx-info/40 bg-avx-info/10 text-avx-info',warning:'border-avx-accent/40 bg-avx-accent/10 text-avx-accent'};const ic={success:'fa-circle-check',error:'fa-circle-xmark',info:'fa-circle-info',warning:'fa-triangle-exclamation'};const el=document.createElement('div');el.className=`toast-in flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-lg text-sm ${cl[type]||cl.info}`;el.innerHTML=`<i class="fa-solid ${ic[type]||ic.info}"></i><span class="flex-1">${msg}</span>`;c.appendChild(el);setTimeout(()=>{el.classList.replace('toast-in','toast-out');setTimeout(()=>el.remove(),300)},3500);}
 function showConfirm(title,msg,onOk){const m=document.getElementById('confirm-modal');document.getElementById('confirm-title').textContent=title;document.getElementById('confirm-msg').textContent=msg;m.classList.remove('hidden');document.getElementById('confirm-ok').onclick=()=>{m.classList.add('hidden');onOk();};}
 
-function updateClock(){
-    const s=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+'  '+new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    ['ct-datetime','sup-datetime'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=s;});
-}
+function updateClock(){const s=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+'  '+new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});['ct-datetime','sup-datetime'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=s;});}
 function startClock(){updateClock();}
 function stopClock(){}
 
-function manualRefresh(){
-    const btn=document.getElementById('ct-refresh-btn')||document.getElementById('sup-refresh-btn');
-    if(btn){btn.classList.add('spinning');btn.disabled=true;}
-    refreshCount++;updateClock();
-    const ts=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    ['ct-refresh-ts','sup-refresh-ts'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=`<i class="fa-regular fa-clock"></i> Updated: ${ts} (#${refreshCount})`;});
-    kbCache=null;kbCacheTime=0;sitesCache=null;sitesCacheTime=0;profileNameCache=null;profileNameCacheTime=0;
-    if(!document.getElementById('ct-screen').classList.contains('hidden')){loadSitesDropdown();}
-    if(!document.getElementById('sup-screen').classList.contains('hidden')){loadActiveCount();switchSupView(S.supView);}
-    setTimeout(()=>{if(btn){btn.classList.remove('spinning');btn.disabled=false;}showToast(`Data refreshed (#${refreshCount})`,'success');},350);
-}
+function manualRefresh(){const btn=document.getElementById('ct-refresh-btn')||document.getElementById('sup-refresh-btn');if(btn){btn.classList.add('spinning');btn.disabled=true;}refreshCount++;updateClock();const ts=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});['ct-refresh-ts','sup-refresh-ts'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=`<i class="fa-regular fa-clock"></i> Updated: ${ts} (#${refreshCount})`;});kbCache=null;kbCacheTime=0;sitesCache=null;sitesCacheTime=0;profileNameCache=null;profileNameCacheTime=0;if(!document.getElementById('ct-screen').classList.contains('hidden')){loadSitesDropdown();}if(!document.getElementById('sup-screen').classList.contains('hidden')){loadActiveCount();switchSupView(S.supView);}setTimeout(()=>{if(btn){btn.classList.remove('spinning');btn.disabled=false;}showToast(`Data refreshed (#${refreshCount})`,'success');},350);}
 
 function statusBadge(st){const m={open:['status-open','Open'],in_progress:['status-progress','In Progress'],resolved:['status-resolved','Resolved']};const[c,t]=m[st]||['status-open',st];return`<span class="inline-flex items-center gap-1.5 text-xs font-medium"><span class="status-dot ${c}"></span>${t}</span>`;}
 
-function findDateCol(row){
-    if(!row||typeof row!=='object')return null;
-    const candidates=['created_at','timestamp','inserted_at','time_created','date_created','created_on','added_at','date','datetime','updated_at'];
-    for(const c of candidates){if(row[c]!==null&&row[c]!==undefined){const v=String(row[c]);if(v.includes('T')||v.includes('-')){const d=new Date(v);if(!isNaN(d.getTime()))return c;}}}
-    for(const [k,v] of Object.entries(row)){if(v===null||v===undefined)continue;const vs=String(v);if(vs.includes('T')&&vs.includes('-')&&vs.length>10){const d=new Date(vs);if(!isNaN(d.getTime())&&d.getFullYear()>2020&&d.getFullYear()<2030)return k;}}
-    return null;
-}
+function findDateCol(row){if(!row||typeof row!=='object')return null;const candidates=['created_at','timestamp','inserted_at','time_created','date_created','created_on','added_at','date','datetime','updated_at'];for(const c of candidates){if(row[c]!==null&&row[c]!==undefined){const v=String(row[c]);if(v.includes('T')||v.includes('-')){const d=new Date(v);if(!isNaN(d.getTime()))return c;}}}for(const[k,v]of Object.entries(row)){if(v===null||v===undefined)continue;const vs=String(v);if(vs.includes('T')&&vs.includes('-')&&vs.length>10){const d=new Date(vs);if(!isNaN(d.getTime())&&d.getFullYear()>2020&&d.getFullYear()<2030)return k;}}return null;}
 function sortByDate(arr){if(!arr||!arr.length)return arr;const dc=findDateCol(arr[0]);if(!dc)return arr;return arr.slice().sort((a,b)=>{const da=new Date(a[dc]||0),db=new Date(b[dc]||0);return db-da;});}
 function getRowDate(row){const dc=findDateCol(row);return dc?fmtDT(row[dc]):'—';}
 
-async function loadProfileNames(){
-    if(profileNameCache&&Date.now()-profileNameCacheTime<PROFILE_CACHE_TTL)return profileNameCache;
-    try{const{data}=await db.from('profiles').select('id,name');profileNameCache={};(data||[]).forEach(p=>{if(p.id)profileNameCache[p.id]=p.name||'Unknown';});profileNameCacheTime=Date.now();return profileNameCache;}catch(e){return profileNameCache||{};}
-}
+async function loadProfileNames(){if(profileNameCache&&Date.now()-profileNameCacheTime<PROFILE_CACHE_TTL)return profileNameCache;try{const{data}=await db.from('profiles').select('id,name');profileNameCache={};(data||[]).forEach(p=>{if(p.id)profileNameCache[p.id]=p.name||'Unknown';});profileNameCacheTime=Date.now();return profileNameCache;}catch(e){return profileNameCache||{};}}
 function getProfileName(uid){return(profileNameCache||{})[uid]||'Unknown';}
 
-// ==============================================
-// 4. AUTH
-// ==============================================
 function switchAuthTab(t){document.getElementById('form-login').classList.toggle('hidden',t!=='login');document.getElementById('form-signup').classList.toggle('hidden',t!=='signup');document.getElementById('tab-login').classList.toggle('active',t==='login');document.getElementById('tab-signup').classList.toggle('active',t==='signup');}
 
-async function handleSignup(){
-    const name=document.getElementById('su-name').value.trim(),email=document.getElementById('su-email').value.trim(),pass=document.getElementById('su-pass').value,role=document.getElementById('su-role').value,des=document.getElementById('su-designation').value.trim();
-    if(!name)return showToast('Please enter your name','warning');if(!email)return showToast('Please enter your email','warning');if(pass.length<6)return showToast('Password must be at least 6 characters','warning');
-    const btn=document.getElementById('su-btn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin mr-2"></i>Creating...';
-    try{const{error}=await db.auth.signUp({email,password:pass,options:{data:{name,role,designation:des}}});if(error)throw error;showToast('Account created! You can now sign in.','success');switchAuthTab('login');document.getElementById('li-email').value=email;}
-    catch(e){showToast(e.message||'Signup failed','error');}finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-user-plus mr-2"></i>Create Account';}
-}
+async function handleSignup(){const name=document.getElementById('su-name').value.trim(),email=document.getElementById('su-email').value.trim(),pass=document.getElementById('su-pass').value,role=document.getElementById('su-role').value,des=document.getElementById('su-designation').value.trim();if(!name)return showToast('Please enter your name','warning');if(!email)return showToast('Please enter your email','warning');if(pass.length<6)return showToast('Password must be at least 6 characters','warning');const btn=document.getElementById('su-btn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin mr-2"></i>Creating...';try{const{error}=await db.auth.signUp({email,password:pass,options:{data:{name,role,designation:des}}});if(error)throw error;showToast('Account created! You can now sign in.','success');switchAuthTab('login');document.getElementById('li-email').value=email;}catch(e){showToast(e.message||'Signup failed','error');}finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-user-plus mr-2"></i>Create Account';}}
 
-async function handleLogin(){
-    const email=document.getElementById('li-email').value.trim(),pass=document.getElementById('li-pass').value;
-    if(!email||!pass)return showToast('Please enter email and password','warning');
-    const btn=document.getElementById('li-btn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin mr-2"></i>Signing in...';
-    try{const{error}=await db.auth.signInWithPassword({email,password:pass});if(error)throw error;}catch(e){showToast(e.message||'Login failed','error');}finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>Sign In';}
-}
+async function handleLogin(){const email=document.getElementById('li-email').value.trim(),pass=document.getElementById('li-pass').value;if(!email||!pass)return showToast('Please enter email and password','warning');const btn=document.getElementById('li-btn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin mr-2"></i>Signing in...';try{const{error}=await db.auth.signInWithPassword({email,password:pass});if(error)throw error;}catch(e){showToast(e.message||'Login failed','error');}finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>Sign In';}}
 
-async function handleLogout(){
-    cleanupRealtime();
-    if(S.profile&&db){try{await db.from('profiles').update({logout_time:now()}).eq('id',S.profile.id);}catch(e){}try{await db.rpc('log_activity',{p_action:'logout'});}catch(e){}}
-    S.profile=null;S.authUser=null;S.currentSessionId=null;S.channel='';S.renderedMsgIds.clear();kbCache=null;sitesCache=null;profileNameCache=null;refreshCount=0;
-    document.getElementById('ct-screen').classList.add('hidden');document.getElementById('sup-screen').classList.add('hidden');document.getElementById('auth-screen').classList.remove('hidden');
-    document.querySelectorAll('.ch-btn').forEach(b=>b.classList.remove('bg-avx-accent/15','border-avx-accent','text-avx-accent'));stopClock();
-    ['ct-refresh-ts','sup-refresh-ts'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML='<i class="fa-regular fa-clock"></i>—';});
-    try{await db.auth.signOut();}catch(e){}showToast('Logged out','info');
-}
+async function handleLogout(){cleanupRealtime();if(S.profile&&db){try{await db.from('profiles').update({logout_time:now()}).eq('id',S.profile.id);}catch(e){}try{await db.rpc('log_activity',{p_action:'logout'});}catch(e){}}S.profile=null;S.authUser=null;S.currentSessionId=null;S.channel='';S.renderedMsgIds.clear();kbCache=null;sitesCache=null;profileNameCache=null;refreshCount=0;document.getElementById('ct-screen').classList.add('hidden');document.getElementById('sup-screen').classList.add('hidden');document.getElementById('auth-screen').classList.remove('hidden');document.querySelectorAll('.ch-btn').forEach(b=>b.classList.remove('bg-avx-accent/15','border-avx-accent','text-avx-accent'));stopClock();['ct-refresh-ts','sup-refresh-ts'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML='<i class="fa-regular fa-clock"></i>—';});try{await db.auth.signOut();}catch(e){}showToast('Logged out','info');}
 
 db.auth.onAuthStateChange(async(ev,session)=>{if(ev==='SIGNED_IN'&&session){S.authUser=session.user;await loadProfile(session.user);}});
 
 // ==============================================
-// 5. PARAPHRASE ENGINE
+// PARAPHRASE ENGINE — only touches chat output
 // ==============================================
 const Paraphraser={
     _seen:new Map(),_recent:[],
@@ -492,13 +390,13 @@ const Paraphraser={
 };
 
 // ==============================================
-// 6. KB SEARCH
+// KB SEARCH
 // ==============================================
 async function loadKB(){if(kbCache&&Date.now()-kbCacheTime<KB_CACHE_TTL)return kbCache;try{const{data,error}=await db.from('knowledge_base').select('*').order('priority',{ascending:false});if(error)throw error;kbCache=data||[];kbCacheTime=Date.now();return kbCache;}catch(e){console.error('KB load error:',e);return kbCache||[];}}
 function searchKB(query,kbEntries){if(!query||!kbEntries||!kbEntries.length)return[];const qWords=query.toLowerCase().replace(/[^\w\s]/g,' ').split(/\s+/).filter(w=>w.length>1);if(!qWords.length)return[];const scored=kbEntries.map(entry=>{let score=0;const keywords=(entry.keywords||'').toLowerCase().split(',').map(k=>k.trim()).filter(k=>k);const question=(entry.question||'').toLowerCase();const answer=(entry.answer||'').toLowerCase().replace(/<[^>]+>/g,'');const category=(entry.category||'').toLowerCase();const priority=entry.priority||5;if(question.includes(query.toLowerCase()))score+=50;for(const kw of keywords){for(const qw of qWords){if(kw===qw)score+=20;else if(kw.includes(qw)||qw.includes(kw))score+=10;}}for(const qw of qWords){if(question.includes(qw))score+=8;if(answer.includes(qw))score+=3;if(category.includes(qw))score+=5;}score+=priority*0.5;return{...entry,_score:score};});return scored.filter(e=>e._score>3).sort((a,b)=>b._score-a._score);}
 
 // ==============================================
-// 7. CHAT UI
+// CHAT UI
 // ==============================================
 function setChannel(ch){S.channel=ch;document.querySelectorAll('.ch-btn').forEach(b=>{const isActive=b.dataset.ch===ch;b.classList.toggle('bg-avx-accent/15',isActive);b.classList.toggle('border-avx-accent',isActive);b.classList.toggle('text-avx-accent',isActive);});}
 function handleChatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
@@ -508,53 +406,56 @@ function renderTyping(){const container=document.getElementById('messages');cons
 function removeTyping(){const el=document.getElementById('typing-indicator');if(el)el.remove();}
 function askSuggestion(chipEl){const text=chipEl.textContent.trim();document.getElementById('chat-input').value=text;sendMessage();}
 
-async function sendMessage(){
-    const input=document.getElementById('chat-input');const text=input.value.trim();if(!text)return;
-    input.value='';input.style.height='auto';renderUserMsg(text);renderTyping();
-    const delay=400+Math.random()*600;
-    setTimeout(async()=>{
-        removeTyping();
-        try{
-            const kbEntries=await loadKB();const results=searchKB(text,kbEntries);
-            if(results.length>0){
-                const best=results[0];
-                const paraphrasedHtml=Paraphraser.paraphrase(best.answer,best);
-                const suggestions=results.slice(1,4).map(r=>r.question).filter(Boolean);
-                const alt=results.length>1?{q:results[1].question,a:results[1].answer}:null;
-                renderBotMsg(paraphrasedHtml,suggestions,alt?.q,alt?.a);
-            }else{renderBotMsg(Paraphraser.noMatch());}
-        }catch(err){console.error('Chat error:',err);renderBotMsg("Something went wrong on my end. Could you try again in a moment?");}
-    },delay);
-}
+async function sendMessage(){const input=document.getElementById('chat-input');const text=input.value.trim();if(!text)return;input.value='';input.style.height='auto';renderUserMsg(text);renderTyping();const delay=400+Math.random()*600;setTimeout(async()=>{removeTyping();try{const kbEntries=await loadKB();const results=searchKB(text,kbEntries);if(results.length>0){const best=results[0];const paraphrasedHtml=Paraphraser.paraphrase(best.answer,best);const suggestions=results.slice(1,4).map(r=>r.question).filter(Boolean);const alt=results.length>1?{q:results[1].question,a:results[1].answer}:null;renderBotMsg(paraphrasedHtml,suggestions,alt?.q,alt?.a);}else{renderBotMsg(Paraphraser.noMatch());}}catch(err){console.error('Chat error:',err);renderBotMsg("Something went wrong on my end. Could you try again in a moment?");}},delay);}
 
 function clearChat(){document.getElementById('messages').innerHTML='';Paraphraser.reset();S.currentSessionId=null;S.renderedMsgIds.clear();showToast('New session started','info');}
 
 function showWelcomeMessage(){const container=document.getElementById('messages');const div=document.createElement('div');div.className='msg-enter flex justify-start';div.innerHTML=`<div class="max-w-[80%] md:max-w-[65%]"><div class="flex items-start gap-2.5"><div class="w-7 h-7 rounded-lg bg-avx-accent/10 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-solid fa-print text-avx-accent text-[10px]"></i></div><div class="flex-1 bg-avx-surface border border-avx-border rounded-2xl rounded-tl-md px-4 py-3"><div class="resp-body text-sm text-avx-text leading-relaxed"><p>Hey there! I'm your AVX Tool HUB assistant. Go ahead and ask me anything about our products, print specs, file requirements, or ordering processes.</p></div><div class="sugg-section" style="margin-top:12px"><p class="sugg-label"><i class="fa-solid fa-sparkles"></i> Try asking</p><div class="sugg-chips"><span class="sugg-chip blue" onclick="askSuggestion(this)"><i class="fa-solid fa-palette"></i>What color mode should I use?</span><span class="sugg-chip green" onclick="askSuggestion(this)"><i class="fa-solid fa-file"></i>What file formats are accepted?</span><span class="sugg-chip" onclick="askSuggestion(this)"><i class="fa-solid fa-ruler"></i>What are the bleed requirements?</span></div></div></div></div></div>`;container.appendChild(div);}
 
 // ==============================================
-// 8. SESSION SAVE
+// SESSION SAVE
 // ==============================================
 async function saveSession(){const orderNum=document.getElementById('ct-order')?.value.trim()||'';const siteId=document.getElementById('ct-site')?.value||'';const designation=document.getElementById('ct-designation')?.value||'';const msgContainer=document.getElementById('messages');const msgEls=msgContainer.querySelectorAll('.resp-body');if(!msgEls.length)return showToast('No conversation to save','warning');const conversation=Array.from(msgContainer.children).map(el=>{const isUser=el.classList.contains('justify-end');const textEl=el.querySelector('.resp-body, .bg-avx-accent\\/15 p');return{role:isUser?'user':'bot',text:textEl?.textContent?.trim()||''};}).filter(m=>m.text);try{const{data,error}=await db.from('sessions').insert({user_id:S.authUser?.id,order_number:orderNum,site_id:siteId||null,designation:designation||null,channel:S.channel||'chat',conversation:conversation,status:'assisted'}).select('id').single();if(error)throw error;S.currentSessionId=data?.id;showToast('Session saved as Assisted!','success');}catch(e){console.error('Save error:',e);showToast('Failed to save session','error');}}
 
 // ==============================================
-// 9. INCIDENT REPORTING
+// INCIDENT REPORTING
 // ==============================================
 function openIncidentModal(){document.getElementById('inc-category').value='complaint';document.getElementById('inc-desc').value='';document.getElementById('incident-modal').classList.remove('hidden');}
 function closeIncidentModal(){document.getElementById('incident-modal').classList.add('hidden');}
 async function submitIncident(){const category=document.getElementById('inc-category').value;const desc=document.getElementById('inc-desc').value.trim();if(!desc)return showToast('Please describe the incident','warning');try{const{error}=await db.from('incidents').insert({user_id:S.authUser?.id,session_id:S.currentSessionId||null,order_number:document.getElementById('ct-order')?.value.trim()||'',category:category,description:desc,status:'open'});if(error)throw error;closeIncidentModal();showToast('Incident reported successfully','success');}catch(e){console.error('Incident error:',e);showToast('Failed to report incident','error');}}
 
 // ==============================================
-// 10. SITES
+// SITES
 // ==============================================
 async function loadSitesDropdown(){try{const{data,error}=await db.from('sites').select('*').order('sort_order',{ascending:true});if(error)throw error;sitesCache=data||[];sitesCacheTime=Date.now();const select=document.getElementById('ct-site');const qlSelect=document.getElementById('ql-site-filter');if(select){const cv=select.value;select.innerHTML='<option value="">Select site...</option>';(data||[]).forEach(s=>{select.innerHTML+=`<option value="${s.id}">${esc(s.name)}</option>`;});if(cv)select.value=cv;}if(qlSelect){const cv=qlSelect.value;qlSelect.innerHTML='<option value="">All Sites</option>';(data||[]).forEach(s=>{qlSelect.innerHTML+=`<option value="${s.id}">${esc(s.name)}</option>`;});if(cv)qlSelect.value=cv;}}catch(e){console.error('Sites load error:',e);}}
 
 // ==============================================
-// 11. PROFILE LOAD
+// PROFILE LOAD — ORIGINAL AUTH FLOW
 // ==============================================
-async function loadProfile(user){try{const{data:profile,error}=await db.from('profiles').select('*').eq('id',user.id).single();if(error)throw error;S.profile=profile;await db.from('profiles').update({login_time:now(),logout_time:null}).eq('id',user.id);S.profile.login_time=now();try{await db.rpc('log_activity',{p_action:'login',p_details:{role:profile.role}});}catch(e){}document.getElementById('auth-screen').classList.add('hidden');if(profile.role==='supervisor'){document.getElementById('sup-screen').classList.remove('hidden');document.getElementById('sup-welcome').textContent='Welcome, '+(profile.name||'Supervisor');startClock();loadSitesDropdown();loadActiveCount();switchSupView('home');}else{document.getElementById('ct-screen').classList.remove('hidden');document.getElementById('ct-welcome').textContent='Welcome, '+(profile.name||'User');document.getElementById('ct-role-label').textContent=cap(profile.role||'')+(profile.designation?' — '+profile.designation:'');startClock();loadSitesDropdown();showWelcomeMessage();}}catch(e){console.error('Profile load error:',e);showToast('Failed to load profile','error');}}
+async function loadProfile(user){
+    try{
+        const{data:profile,error}=await db.from('profiles').select('*').eq('id',user.id).single();
+        if(error)throw error;
+        S.profile=profile;
+        await db.from('profiles').update({login_time:now(),logout_time:null}).eq('id',user.id);
+        S.profile.login_time=now();
+        try{await db.rpc('log_activity',{p_action:'login',p_details:{role:profile.role}});}catch(e){}
+        document.getElementById('auth-screen').classList.add('hidden');
+        if(profile.role==='supervisor'){
+            document.getElementById('sup-screen').classList.remove('hidden');
+            document.getElementById('sup-welcome').textContent='Welcome, '+(profile.name||'Supervisor');
+            startClock();loadSitesDropdown();loadActiveCount();switchSupView('home');
+        }else{
+            document.getElementById('ct-screen').classList.remove('hidden');
+            document.getElementById('ct-welcome').textContent='Welcome, '+(profile.name||'User');
+            document.getElementById('ct-role-label').textContent=cap(profile.role||'')+(profile.designation?' — '+profile.designation:'');
+            startClock();loadSitesDropdown();showWelcomeMessage();
+        }
+    }catch(e){console.error('Profile load error:',e);showToast('Failed to load profile','error');}
+}
 
 // ==============================================
-// 12. SUPERVISOR DASHBOARD
+// SUPERVISOR DASHBOARD
 // ==============================================
 async function loadActiveCount(){try{const{count}=await db.from('sessions').select('*',{count:'exact',head:true}).eq('status','active');const el=document.getElementById('sup-active-count');if(el)el.textContent=count||0;}catch(e){}}
 function toggleSupSidebar(){document.getElementById('sup-sidebar').classList.toggle('open');}
@@ -578,7 +479,7 @@ async function saveSite(){const id=document.getElementById('site-edit-id').value
 function deleteSite(id){showConfirm('Delete Site','Are you sure you want to delete this site?',async()=>{try{await db.from('sites').delete().eq('id',id);showToast('Site deleted','success');sitesCache=null;switchSupView('sites');loadSitesDropdown();}catch(e){showToast('Failed to delete','error');}});}
 
 // ==============================================
-// 13. KB MANAGEMENT
+// KB MANAGEMENT
 // ==============================================
 async function renderSupKnowledge(container){container.innerHTML='<div class="flex items-center justify-center py-20"><i class="fa-solid fa-spinner fa-spin text-avx-accent text-2xl"></i></div>';try{const entries=await loadKB();const categories=[...new Set(entries.map(e=>e.category).filter(Boolean))].sort();container.innerHTML=`<div class="page-enter space-y-4"><div class="flex flex-wrap items-center justify-between gap-3"><h2 class="text-lg font-display font-semibold text-avx-text">Knowledge Base</h2><div class="flex items-center gap-2"><button onclick="document.getElementById('import-modal').classList.remove('hidden')" class="px-3 py-2 border border-avx-border text-avx-muted hover:text-avx-text hover:border-avx-text/30 rounded-lg text-sm transition-all"><i class="fa-solid fa-file-import mr-1.5"></i>Import</button><button onclick="openKbModal()" class="px-4 py-2 bg-avx-accent hover:bg-avx-accent-h text-white font-semibold rounded-lg text-sm transition-all btn-glow"><i class="fa-solid fa-plus mr-2"></i>Add Entry</button></div></div><div class="flex items-center gap-3"><div class="relative"><select id="kb-cat-filter" onchange="filterKbList()" class="kb-filter-select"><option value="">All Categories</option>${categories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}</select><i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-avx-muted text-[9px] pointer-events-none"></i></div><input id="kb-search" type="text" placeholder="Search entries..." oninput="filterKbList()" class="bg-avx-card border border-avx-border rounded-lg px-3 py-1.5 text-avx-text text-sm placeholder-avx-muted/40 flex-1 max-w-xs"><span class="text-xs text-avx-muted">${entries.length} entries</span></div><div id="kb-list" class="space-y-2"></div></div>`;filterKbList();}catch(e){container.innerHTML='<p class="text-avx-error text-sm">Failed to load knowledge base.</p>';}}
 
@@ -593,7 +494,7 @@ function deleteKbEntry(id){showConfirm('Delete Entry','Are you sure you want to 
 async function importCSV(){const csv=document.getElementById('import-csv').value.trim();if(!csv)return showToast('Paste CSV content first','warning');const lines=csv.split('\n').map(l=>l.trim()).filter(l=>l);if(lines.length<2)return showToast('CSV needs a header row and at least one data row','warning');const headers=lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,''));const rows=[];for(let i=1;i<lines.length;i++){const vals=[];let current='',inQuote=false;for(const ch of lines[i]){if(ch==='"')inQuote=!inQuote;else if(ch===','&&!inQuote){vals.push(current.trim());current='';}else current+=ch;}vals.push(current.trim());const obj={};headers.forEach((h,idx)=>{obj[h]=vals[idx]||'';});rows.push(obj);}try{const inserts=rows.map(r=>({category:r.category||'',keywords:r.keywords||'',question:r.question||'',answer:r.answer||'',priority:parseInt(r.priority)||5}));const{error}=await db.from('knowledge_base').insert(inserts);if(error)throw error;showToast(`${inserts.length} entries imported!`,'success');document.getElementById('import-modal').classList.add('hidden');document.getElementById('import-csv').value='';kbCache=null;switchSupView('knowledge');}catch(e){console.error('Import error:',e);showToast('Import failed: '+(e.message||'Unknown error'),'error');}}
 
 // ==============================================
-// 14. CONVERSATION MODAL
+// CONVERSATION MODAL
 // ==============================================
 function openConvModal(sessionId,userId){const modal=document.getElementById('conv-modal');const meta=document.getElementById('conv-meta');const msgContainer=document.getElementById('conv-messages');const notesDiv=document.getElementById('conv-notes');const notesText=document.getElementById('conv-notes-text');const liveIndicator=document.getElementById('conv-live');meta.textContent=getProfileName(userId)+' — Session '+sessionId.substring(0,8);msgContainer.innerHTML='<div class="flex items-center justify-center py-10"><i class="fa-solid fa-spinner fa-spin text-avx-accent"></i></div>';notesDiv.classList.add('hidden');liveIndicator.classList.add('hidden');(async()=>{try{const{data}=await db.from('sessions').select('*').eq('id',sessionId).single();if(!data||!data.conversation){msgContainer.innerHTML='<p class="text-sm text-avx-muted text-center">No conversation data found.</p>';return;}const msgs=Array.isArray(data.conversation)?data.conversation:[];msgContainer.innerHTML=msgs.map(m=>{if(m.role==='user')return`<div class="flex justify-end"><div class="max-w-[75%] bg-avx-accent/15 border border-avx-accent/25 rounded-2xl rounded-tr-md px-4 py-2.5"><p class="text-sm text-avx-text">${esc(m.text)}</p></div></div>`;return`<div class="flex justify-start"><div class="max-w-[75%] bg-avx-surface border border-avx-border rounded-2xl rounded-tl-md px-4 py-2.5"><p class="text-sm text-avx-text">${esc(m.text)}</p></div></div>`;}).join('');if(data.notes){notesText.textContent=data.notes;notesDiv.classList.remove('hidden');}if(data.status==='active'){liveIndicator.classList.remove('hidden');setupConvRealtime(sessionId);}}catch(e){msgContainer.innerHTML='<p class="text-sm text-avx-error">Failed to load conversation.</p>';}})();modal.classList.remove('hidden');}
 function closeConvModal(){document.getElementById('conv-modal').classList.add('hidden');cleanupConvRealtime();}
@@ -602,497 +503,21 @@ function setupConvRealtime(sessionId){cleanupConvRealtime();if(!db)return;convMs
 function cleanupConvRealtime(){if(convMsgSub){convMsgSub.unsubscribe();convMsgSub=null;}}
 
 // ==============================================
-// 15. QUICK LINKS
+// QUICK LINKS
 // ==============================================
 function toggleQuickLinks(){document.getElementById('quick-links-panel').classList.toggle('hidden');}
 async function loadQuickLinks(){const siteFilter=document.getElementById('ql-site-filter')?.value||'';const container=document.getElementById('ql-content');if(!container)return;container.innerHTML='<div class="flex items-center justify-center py-10"><i class="fa-solid fa-spinner fa-spin text-avx-accent text-sm"></i></div>';try{let query=db.from('quick_links').select('*').order('sort_order',{ascending:true});if(siteFilter)query=query.eq('site_id',siteFilter);const{data}=await query;const links=data||[];if(links.length===0){container.innerHTML='<p class="text-sm text-avx-muted text-center py-10">No quick links found.</p>';return;}container.innerHTML=links.map(l=>`<a href="${esc(l.url)}" target="_blank" class="block bg-avx-card border border-avx-border rounded-lg p-3 hover:border-avx-accent/30 transition-all hover:translate-y-[-1px]"><p class="text-sm font-medium text-avx-text mb-0.5">${esc(l.title)}</p>${l.description?`<p class="text-xs text-avx-muted">${esc(l.description)}</p>`:''}<p class="text-[10px] text-avx-accent mt-1 truncate">${esc(l.url)}</p></a>`).join('');}catch(e){container.innerHTML='<p class="text-sm text-avx-error">Failed to load links.</p>';}}
 
 // ==============================================
-// 16. REALTIME CLEANUP
+// REALTIME CLEANUP
 // ==============================================
 function cleanupRealtime(){cleanupConvRealtime();if(msgChannel){msgChannel.unsubscribe();msgChannel=null;}if(convChannel){convChannel.unsubscribe();convChannel=null;}}
 
 // ==============================================
-// 17. INIT
+// INIT
 // ==============================================
 startClock();
 setInterval(updateClock,1000);
-</script>
-
-<script>
-/**
- * Iframe 元素高亮注入脚本
- * 需要在目标网站中引入此脚本来支持跨域 iframe 高亮功能
- *
- * 使用方法：
- * 1. 将此脚本添加到目标网站的 HTML 中
- * 2. 或通过浏览器扩展、用户脚本等方式注入
- */
-
-(function () {
-  "use strict";
-
-  // 检查是否在 iframe 中
-  if (window.self === window.top) {
-    return; // 不在 iframe 中，不执行
-  }
-
-  // 检查是否已经初始化过
-  if (window.__iframeHighlightInitialized) {
-    return;
-  }
-  window.__iframeHighlightInitialized = true;
-  console.log("Iframe 高亮脚本已加载");
-
-  // 创建高亮覆盖层
-  var overlay = document.createElement("div");
-  overlay.id = "iframe-highlight-overlay";
-  overlay.style.cssText = "\n    position: fixed;\n    top: 0;\n    left: 0;\n    width: 100vw;\n    height: 100vh;\n    pointer-events: none;\n    z-index: 999999;\n    overflow: hidden;\n  ";
-
-  // 创建悬停高亮框（虚线边框）
-  var highlightBox = document.createElement("div");
-  highlightBox.id = "iframe-highlight-box";
-  highlightBox.style.cssText = "\n    position: absolute;\n    border: 2px dashed #007AFF;\n    background: rgba(0, 122, 255, 0.08);\n    pointer-events: none;\n    display: none;\n    transition: all 0.1s ease;\n    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);\n    border-radius: 2px;\n  ";
-
-  // 创建选中节点的常驻高亮框（实线边框）
-  var selectedBox = document.createElement("div");
-  selectedBox.id = "iframe-selected-box";
-  selectedBox.style.cssText = "\n    position: absolute;\n    border: 2px solid #007AFF;\n    pointer-events: none;\n    display: none;\n    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9), 0 0 8px rgba(255, 107, 53, 0.4);\n    border-radius: 2px;\n    z-index: 1000000;\n  ";
-
-  // 创建悬停标签显示
-  var tagLabel = document.createElement("div");
-  tagLabel.id = "iframe-tag-label";
-  tagLabel.style.cssText = "\n    position: absolute;\n    background: #007AFF;\n    color: white;\n    padding: 2px 6px;\n    font-size: 11px;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n    border-radius: 2px;\n    pointer-events: none;\n    display: none;\n    white-space: nowrap;\n    z-index: 1000001;\n    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);\n    font-weight: 500;\n  ";
-
-  // 创建选中节点标签
-  var selectedLabel = document.createElement("div");
-  selectedLabel.id = "iframe-selected-label";
-  selectedLabel.style.cssText = "\n    position: absolute;\n    background: #007AFF;\n    color: white;\n    padding: 3px 8px;\n    font-size: 11px;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n    border-radius: 3px;\n    pointer-events: none;\n    display: none;\n    white-space: nowrap;\n    z-index: 1000002;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);\n    font-weight: 600;\n  ";
-  overlay.appendChild(highlightBox);
-  overlay.appendChild(selectedBox);
-  overlay.appendChild(tagLabel);
-  overlay.appendChild(selectedLabel);
-  document.body.appendChild(overlay);
-
-  // 存储当前选中的元素
-  var selectedElement = null;
-  var highlightEnabled = false;
-
-  // 更新选中元素的高亮显示
-  function updateSelectedHighlight(element) {
-    console.log("updateSelectedHighlight called with:", element);
-    if (!element) {
-      selectedBox.style.display = "none";
-      selectedLabel.style.display = "none";
-      selectedElement = null;
-      console.log("Cleared selected highlight");
-      return;
-    }
-    selectedElement = element;
-    var rect = element.getBoundingClientRect();
-    console.log("Selected element rect:", rect);
-
-    // 更新选中高亮框位置
-    selectedBox.style.display = "block";
-    selectedBox.style.left = "".concat(rect.left - 2, "px");
-    selectedBox.style.top = "".concat(rect.top - 2, "px");
-    selectedBox.style.width = "".concat(rect.width + 4, "px");
-    selectedBox.style.height = "".concat(rect.height + 4, "px");
-
-    // 更新选中标签位置和内容
-    selectedLabel.style.display = "block";
-    selectedLabel.textContent = "\u2713 <".concat(element.tagName.toLowerCase(), ">");
-
-    // 计算标签位置，确保不超出视窗
-    var labelTop = rect.top - 28;
-    var labelLeft = rect.left;
-
-    // 如果标签会超出顶部，显示在元素下方
-    if (labelTop < 5) {
-      labelTop = rect.bottom + 5;
-    }
-
-    // 如果标签会超出右侧，向左调整
-    var labelWidth = selectedLabel.offsetWidth || 100; // 预估宽度
-    if (labelLeft + labelWidth > window.innerWidth - 10) {
-      labelLeft = window.innerWidth - labelWidth - 10;
-    }
-    selectedLabel.style.left = "".concat(Math.max(5, labelLeft), "px");
-    selectedLabel.style.top = "".concat(labelTop, "px");
-    console.log("Selected highlight positioned at:", {
-      left: selectedBox.style.left,
-      top: selectedBox.style.top,
-      width: selectedBox.style.width,
-      height: selectedBox.style.height
-    });
-  }
-  function getElementSelector(element) {
-    if (!(element instanceof Element)) throw new Error('Argument must be a DOM element');
-    var segments = [];
-    var current = element;
-    while (current !== document.documentElement) {
-      var selector = '';
-      // 优先检查唯一ID
-      if (current.id && document.querySelectorAll("#".concat(current.id)).length === 1) {
-        segments.unshift("#".concat(current.id));
-        break; // ID唯一，无需继续向上
-      }
-
-      // 生成类名选择器（取第一个有效类名）
-      var classes = Array.from(current.classList).filter(function (c) {
-        return !c.startsWith('js-');
-      });
-      var className = classes.length > 0 ? ".".concat(classes[0]) : '';
-
-      // 生成位置索引（nth-child）
-      var tag = current.tagName.toLowerCase();
-      if (!className) {
-        var siblings = Array.from(current.parentNode.children);
-        var index = siblings.findIndex(function (el) {
-          return el === current;
-        }) + 1;
-        selector = "".concat(tag, ":nth-child(").concat(index, ")");
-      } else {
-        selector = className;
-      }
-      segments.unshift(selector);
-      current = current.parentElement;
-    }
-
-    // 处理根元素
-    if (current === document.documentElement) {
-      segments.unshift('html');
-    }
-    return segments.join(' > ');
-  }
-
-  // 获取元素文本内容
-  function getElementText(element) {
-    var _element$textContent;
-    if (element.tagName === "INPUT") {
-      return element.value || element.placeholder || "";
-    }
-    if (element.tagName === "TEXTAREA") {
-      return element.value || element.placeholder || "";
-    }
-    var text = ((_element$textContent = element.textContent) === null || _element$textContent === void 0 ? void 0 : _element$textContent.trim()) || "";
-    return text.length > 50 ? text.substring(0, 50) + "..." : text;
-  }
-
-  // 获取元素属性信息
-  function getElementAttributes(element) {
-    var attrs = {};
-    for (var i = 0; i < element.attributes.length; i++) {
-      var attr = element.attributes[i];
-      attrs[attr.name] = attr.value;
-    }
-    return attrs;
-  }
-
-  // 鼠标悬停事件处理
-  function handleMouseOver(e) {
-    if (!highlightEnabled) return;
-    var target = e.target;
-    if (!target || target === overlay || target === highlightBox || target === tagLabel || target === selectedBox || target === selectedLabel) {
-      return;
-    }
-
-    // 避免高亮 html 和 body 元素
-    if (target === document.documentElement || target === document.body) {
-      return;
-    }
-
-    // 如果是已选中的元素，不显示悬停高亮
-    if (target === selectedElement) {
-      highlightBox.style.display = "none";
-      tagLabel.style.display = "none";
-      return;
-    }
-    var rect = target.getBoundingClientRect();
-    var selector = getElementSelector(target);
-    var text = getElementText(target);
-    var attributes = getElementAttributes(target);
-
-    // 更新悬停高亮框位置
-    highlightBox.style.display = "block";
-    highlightBox.style.left = "".concat(rect.left - 2, "px");
-    highlightBox.style.top = "".concat(rect.top - 2, "px");
-    highlightBox.style.width = "".concat(rect.width + 4, "px");
-    highlightBox.style.height = "".concat(rect.height + 4, "px");
-
-    // 更新标签位置和内容
-    tagLabel.style.display = "block";
-    tagLabel.textContent = "<".concat(target.tagName.toLowerCase(), ">");
-
-    // 计算标签位置，确保不超出视窗
-    var labelTop = rect.top - 22;
-    var labelLeft = rect.left;
-
-    // 如果标签会超出顶部，显示在元素下方
-    if (labelTop < 0) {
-      labelTop = rect.bottom + 5;
-    }
-
-    // 如果标签会超出右侧，向左调整
-    if (labelLeft + tagLabel.offsetWidth > window.innerWidth) {
-      labelLeft = window.innerWidth - tagLabel.offsetWidth - 5;
-    }
-    tagLabel.style.left = "".concat(Math.max(0, labelLeft), "px");
-    tagLabel.style.top = "".concat(labelTop, "px");
-
-    // 发送消息到父窗口
-    var elementInfo = {
-      tagName: target.tagName.toLowerCase(),
-      rect: {
-        left: rect.left,
-        top: rect.top,
-        right: rect.right,
-        bottom: rect.bottom,
-        width: rect.width,
-        height: rect.height,
-        x: rect.x,
-        y: rect.y
-      },
-      selector: selector,
-      text: text,
-      attributes: attributes,
-      url: window.location.href,
-      path: window.location.pathname,
-      timestamp: Date.now()
-    };
-    try {
-      window.parent.postMessage({
-        type: "iframe-element-hover",
-        data: elementInfo,
-        source: "iframe-highlight-injector"
-      }, "*");
-    } catch (error) {
-      console.warn("无法发送消息到父窗口:", error);
-    }
-  }
-
-  // 鼠标离开事件处理
-  function handleMouseOut(e) {
-    if (!highlightEnabled) return;
-    var relatedTarget = e.relatedTarget;
-
-    // 如果鼠标移动到高亮相关元素上，不隐藏高亮
-    if (relatedTarget && (relatedTarget === highlightBox || relatedTarget === tagLabel || relatedTarget === overlay || relatedTarget === selectedBox || relatedTarget === selectedLabel)) {
-      return;
-    }
-    highlightBox.style.display = "none";
-    tagLabel.style.display = "none";
-    try {
-      window.parent.postMessage({
-        type: "iframe-element-hover",
-        data: null,
-        source: "iframe-highlight-injector"
-      }, "*");
-    } catch (error) {
-      console.warn("无法发送消息到父窗口:", error);
-    }
-  }
-
-  // 点击事件处理
-  function handleClick(e) {
-    var target = e.target;
-    if (!target || target === overlay || target === highlightBox || target === tagLabel || target === selectedBox || target === selectedLabel) {
-      return;
-    }
-
-    // 避免处理 html 和 body 元素
-    if (target === document.documentElement || target === document.body) {
-      return;
-    }
-
-    // 检查是否是交互元素，这些元素需要保留默认行为
-    var isInteractiveElement = ['input', 'textarea', 'select', 'button', 'a'].includes(target.tagName.toLowerCase());
-
-    // 如果高亮功能启用，对于非交互元素阻止默认行为和事件传播
-    if (highlightEnabled) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    var rect = target.getBoundingClientRect();
-    var selector = getElementSelector(target);
-    var text = getElementText(target);
-    var attributes = getElementAttributes(target);
-    console.log("Element clicked:", {
-      tagName: target.tagName,
-      selector: selector,
-      rect: rect
-    });
-
-    // 立即更新选中高亮
-    updateSelectedHighlight(target);
-
-    // 隐藏悬停高亮，因为现在是选中状态
-    highlightBox.style.display = "none";
-    tagLabel.style.display = "none";
-    var elementInfo = {
-      tagName: target.tagName.toLowerCase(),
-      rect: {
-        left: rect.left,
-        top: rect.top,
-        right: rect.right,
-        bottom: rect.bottom,
-        width: rect.width,
-        height: rect.height,
-        x: rect.x,
-        y: rect.y
-      },
-      selector: selector,
-      text: text,
-      attributes: attributes,
-      url: window.location.href,
-      path: window.location.pathname,
-      timestamp: Date.now()
-    };
-    try {
-      window.parent.postMessage({
-        type: "iframe-element-click",
-        data: elementInfo,
-        source: "iframe-highlight-injector"
-      }, "*");
-    } catch (error) {
-      console.warn("无法发送消息到父窗口:", error);
-    }
-  }
-
-  // 监听来自父窗口的消息
-  function handleParentMessage(event) {
-    console.log("Received message from parent:", event.data);
-    if (event.data.type === "iframe-highlight-toggle") {
-      var enabled = event.data.enabled;
-      console.log("Highlight toggle:", enabled);
-      if (enabled) {
-        enableHighlight();
-      } else {
-        disableHighlight();
-      }
-    } else if (event.data.type === "enable-iframe-highlight") {
-      console.log("Enable iframe highlight");
-      enableHighlight();
-    } else if (event.data.type === "disable-iframe-highlight") {
-      console.log("Disable iframe highlight");
-      disableHighlight();
-    } else if (event.data.type === "toggle-iframe-highlight") {
-      var _enabled = event.data.enabled !== undefined ? event.data.enabled : !highlightEnabled;
-      console.log("Toggle iframe highlight to:", _enabled);
-      if (_enabled) {
-        enableHighlight();
-      } else {
-        disableHighlight();
-      }
-    } else if (event.data.type === "update-selected-element") {
-      var selector = event.data.selector;
-      console.log("Update selected element with selector:", selector);
-      if (selector) {
-        try {
-          var element = document.querySelector(selector);
-          console.log("Found element by selector:", element);
-          updateSelectedHighlight(element);
-        } catch (error) {
-          console.warn("Failed to select element:", error);
-          updateSelectedHighlight(null);
-        }
-      } else {
-        updateSelectedHighlight(null);
-      }
-    } else if (event.data.type === "clear-selected-element") {
-      console.log("Clear selected element");
-      updateSelectedHighlight(null);
-    }
-  }
-
-  // 启用高亮功能
-  function enableHighlight() {
-    console.log("Enabling highlight");
-    document.addEventListener("mouseover", handleMouseOver, true);
-    document.addEventListener("mouseout", handleMouseOut, true);
-    document.addEventListener("click", handleClick, true);
-    highlightEnabled = true;
-    overlay.style.display = "block";
-  }
-
-  // 禁用高亮功能
-  function disableHighlight() {
-    console.log("Disabling highlight");
-    highlightEnabled = false;
-    // 保持事件监听器，但通过 highlightEnabled 变量控制行为
-    // 这样可以保留选中状态的显示
-    highlightBox.style.display = "none";
-    tagLabel.style.display = "none";
-    // 不隐藏 selectedBox 和 selectedLabel，保留选中状态
-  }
-
-  // 完全禁用高亮功能（移除所有监听器）
-  function fullyDisableHighlight() {
-    console.log("Fully disabling highlight");
-    highlightEnabled = false;
-    document.removeEventListener("mouseover", handleMouseOver, true);
-    document.removeEventListener("mouseout", handleMouseOut, true);
-    document.removeEventListener("click", handleClick, true);
-    overlay.style.display = "none";
-    highlightBox.style.display = "none";
-    tagLabel.style.display = "none";
-    selectedBox.style.display = "none";
-    selectedLabel.style.display = "none";
-  }
-
-  // 添加事件监听
-  enableHighlight();
-  window.addEventListener("message", handleParentMessage);
-
-  // 暴露全局函数供外部调用
-  window.__iframeHighlightControl = {
-    enable: enableHighlight,
-    disable: disableHighlight,
-    fullyDisable: fullyDisableHighlight,
-    isEnabled: function isEnabled() {
-      return highlightEnabled;
-    },
-    getSelectedElement: function getSelectedElement() {
-      return selectedElement;
-    },
-    updateSelected: updateSelectedHighlight,
-    // 通过消息发送开关控制
-    sendToggleMessage: function sendToggleMessage(enabled) {
-      window.parent.postMessage({
-        type: 'iframe-highlight-status',
-        enabled: enabled || highlightEnabled,
-        source: 'iframe-highlight-injector'
-      }, '*');
-    }
-  };
-
-  // 通知父窗口脚本已加载
-  try {
-    window.parent.postMessage({
-      type: "iframe-highlight-ready",
-      data: {
-        url: window.location.href,
-        userAgent: navigator.userAgent,
-        timestamp: Date.now()
-      },
-      source: "iframe-highlight-injector"
-    }, "*");
-  } catch (error) {
-    console.warn("无法发送就绪消息到父窗口:", error);
-  }
-
-  // 清理函数
-  window.__iframeHighlightCleanup = function () {
-    fullyDisableHighlight();
-    window.removeEventListener("message", handleParentMessage);
-    if (overlay.parentElement) {
-      overlay.parentElement.removeChild(overlay);
-    }
-    delete window.__iframeHighlightInitialized;
-    delete window.__iframeHighlightCleanup;
-  };
-})();
-
 </script>
 </body>
 </html>
