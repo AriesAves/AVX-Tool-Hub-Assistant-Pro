@@ -4,23 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1a1a2e">
-<meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>AVX Tool HUB Assistant PRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Quill.js WYSIWYG Editor -->
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
     <script>
-        tailwind.config={theme:{extend:{fontFamily:{display:['Space Grotesk','sans-serif'],body:['DM Sans','sans-serif']},colors:{avx:{bg:'#0D1117',surface:'#161B22',card:'#1C2333',border:'#30363D',accent:'#F59E0B','accent-h':'#D97706',text:'#E6EDF3',muted:'#7D8590',success:'#3FB950',error:'#F85149',info:'#58A6FF'}}}}}
+        tailwind.config={theme:{extend:{fontFamily:{display:['Space Grotesk','sans-serif'],body:['DM Sans','sans-serif']},colors:{avx:{bg:'#0D1117',surface:'#161B22',card:'#1C2333',border:'#30363D',accent:'#3B82F6','accent-h':'#2563EB',text:'#E6EDF3',muted:'#7D8590',success:'#3FB950',error:'#F85149',info:'#58A6FF'}}}}}
     </script>
     <style>
         *{box-sizing:border-box}body{font-family:'DM Sans',sans-serif;background:#0D1117;color:#E6EDF3;margin:0;overflow:hidden;height:100vh}h1,h2,h3,h4,h5,h6{font-family:'Space Grotesk',sans-serif}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#30363D;border-radius:3px}
         .bg-orb{position:absolute;border-radius:50%;filter:blur(100px);opacity:.12;pointer-events:none}
-        .bg-orb-1{width:500px;height:500px;background:#F59E0B;top:-150px;left:-100px;animation:om1 25s infinite ease-in-out}
-        .bg-orb-2{width:400px;height:400px;background:#EF4444;bottom:-100px;right:-80px;animation:om2 30s infinite ease-in-out}
-        .bg-orb-3{width:300px;height:300px;background:#F59E0B;top:50%;left:60%;animation:om3 20s infinite ease-in-out}
+        .bg-orb-1{width:500px;height:500px;background:#3B82F6;top:-150px;left:-100px;animation:om1 25s infinite ease-in-out}
+        .bg-orb-2{width:400px;height:400px;background:#60A5FA;bottom:-100px;right:-80px;animation:om2 30s infinite ease-in-out}
+        .bg-orb-3{width:300px;height:300px;background:#3B82F6;top:50%;left:60%;animation:om3 20s infinite ease-in-out}
         @keyframes om1{0%,100%{transform:translate(0,0)}33%{transform:translate(60px,80px)}66%{transform:translate(-40px,40px)}}
         @keyframes om2{0%,100%{transform:translate(0,0)}33%{transform:translate(-50px,-60px)}66%{transform:translate(30px,-30px)}}
         @keyframes om3{0%,100%{transform:translate(0,0)}50%{transform:translate(-80px,50px)}}
@@ -32,26 +35,26 @@
         .toast-in{animation:tsIn .35s ease-out}.toast-out{animation:tsOut .3s ease-in forwards}
         @keyframes tsIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
         @keyframes tsOut{to{opacity:0;transform:translateX(40px)}}
-        .accent-line{height:2px;background:linear-gradient(90deg,transparent,#F59E0B,transparent)}
-        .btn-glow{box-shadow:0 0 20px rgba(245,158,11,.15);transition:box-shadow .3s}
-        .btn-glow:hover{box-shadow:0 0 30px rgba(245,158,11,.3)}
+        .accent-line{height:2px;background:linear-gradient(90deg,transparent,#3B82F6,transparent)}
+        .btn-glow{box-shadow:0 0 20px rgba(59,130,246,.15);transition:box-shadow .3s}
+        .btn-glow:hover{box-shadow:0 0 30px rgba(59,130,246,.3)}
         .nav-item{transition:all .2s;border-left:3px solid transparent}
-        .nav-item:hover{background:rgba(245,158,11,.06)}
-        .nav-item.active{background:rgba(245,158,11,.1);border-left-color:#F59E0B;color:#F59E0B}
+        .nav-item:hover{background:rgba(59,130,246,.06)}
+        .nav-item.active{background:rgba(59,130,246,.1);border-left-color:#3B82F6;color:#3B82F6}
         .hover-card{transition:transform .2s,box-shadow .2s}
         .hover-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
         .modal-backdrop{background:rgba(0,0,0,.7);backdrop-filter:blur(4px)}
-        .pulse-ring{animation:pr 2s infinite}@keyframes pr{0%{box-shadow:0 0 0 0 rgba(245,158,11,.4)}70%{box-shadow:0 0 0 10px rgba(245,158,11,0)}100%{box-shadow:0 0 0 0 rgba(245,158,11,0)}}
+        .pulse-ring{animation:pr 2s infinite}@keyframes pr{0%{box-shadow:0 0 0 0 rgba(59,130,246,.4)}70%{box-shadow:0 0 0 10px rgba(59,130,246,0)}100%{box-shadow:0 0 0 0 rgba(59,130,246,0)}}
         .ch-badge{font-size:.65rem;padding:2px 8px;border-radius:9999px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-        input:focus,select:focus,textarea:focus{outline:none;border-color:#F59E0B!important;box-shadow:0 0 0 2px rgba(245,158,11,.15)}
+        input:focus,select:focus,textarea:focus{outline:none;border-color:#3B82F6!important;box-shadow:0 0 0 2px rgba(59,130,246,.15)}
         .auth-tab{transition:all .2s;border-bottom:2px solid transparent;color:#7D8590}
-        .auth-tab.active{color:#F59E0B;border-bottom-color:#F59E0B}
+        .auth-tab.active{color:#3B82F6;border-bottom-color:#3B82F6}
         .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-        .status-open{background:#F85149}.status-progress{background:#F59E0B}.status-resolved{background:#3FB950}
+        .status-open{background:#F85149}.status-progress{background:#3B82F6}.status-resolved{background:#3FB950}
         .kb-cat-tag{font-size:.65rem;padding:2px 8px;border-radius:9999px;font-weight:500}
-        .site-card{transition:all .2s}.site-card:hover{border-color:rgba(245,158,11,.3);transform:translateY(-1px)}
-        .manual-refresh-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);border-radius:8px;color:#F59E0B;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
-        .manual-refresh-btn:hover{background:rgba(245,158,11,.2);border-color:rgba(245,158,11,.4)}
+        .site-card{transition:all .2s}.site-card:hover{border-color:rgba(59,130,246,.3);transform:translateY(-1px)}
+        .manual-refresh-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.25);border-radius:8px;color:#3B82F6;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+        .manual-refresh-btn:hover{background:rgba(59,130,246,.2);border-color:rgba(59,130,246,.4)}
         .manual-refresh-btn:active{transform:scale(.96)}
         .manual-refresh-btn .spin-icon{transition:transform .5s ease}
         .manual-refresh-btn.spinning .spin-icon{transform:rotate(360deg)}
@@ -59,8 +62,8 @@
         .sugg-section{margin-top:10px;padding-top:10px;border-top:1px solid rgba(48,54,61,.6)}
         .sugg-label{font-size:11px;color:#7D8590;margin-bottom:6px;display:flex;align-items:center;gap:5px}
         .sugg-chips{display:flex;flex-wrap:wrap;gap:5px}
-        .sugg-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;border:1px solid rgba(245,158,11,.2);background:rgba(245,158,11,.06);color:#F59E0B}
-        .sugg-chip:hover{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.4);transform:translateY(-1px)}
+        .sugg-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;border:1px solid rgba(59,130,246,.2);background:rgba(59,130,246,.06);color:#3B82F6}
+        .sugg-chip:hover{background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.4);transform:translateY(-1px)}
         .sugg-chip.blue{border-color:rgba(88,166,255,.2);background:rgba(88,166,255,.06);color:#58A6FF}
         .sugg-chip.blue:hover{background:rgba(88,166,255,.15);border-color:rgba(88,166,255,.4)}
         .sugg-chip.green{border-color:rgba(63,185,80,.2);background:rgba(63,185,80,.06);color:#3FB950}
@@ -69,10 +72,34 @@
         .alt-section{margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(88,166,255,.05);border:1px solid rgba(88,166,255,.1)}
         .alt-section p{font-size:11px;color:#58A6FF;margin-bottom:5px;font-weight:500}
         .resp-body p{margin-bottom:6px}.resp-body p:last-child{margin-bottom:0}
-        .resp-body strong{color:#F59E0B;font-weight:600}
+        .resp-body strong{color:#3B82F6;font-weight:600}
         .resp-body ul{margin:4px 0 8px 16px;list-style:disc}.resp-body li{margin-bottom:3px;font-size:13px}
         .kb-filter-select{background:#1C2333;border:1px solid #30363D;border-radius:8px;padding:6px 30px 6px 10px;color:#E6EDF3;font-size:12px;appearance:none;cursor:pointer;transition:border-color .2s}
-        .kb-filter-select:focus{border-color:#F59E0B;outline:none;box-shadow:0 0 0 2px rgba(245,158,11,.15)}
+        .kb-filter-select:focus{border-color:#3B82F6;outline:none;box-shadow:0 0 0 2px rgba(59,130,246,.15)}
+        /* Quill Editor Custom Styles */
+        .ql-toolbar.ql-snow{border-color:#30363D!important;border-radius:8px 8px 0 0;background:#1C2333}
+        .ql-container.ql-snow{border-color:#30363D!important;border-radius:0 0 8px 8px;font-family:'DM Sans',sans-serif;font-size:14px;background:#1C2333;color:#E6EDF3;min-height:200px;max-height:350px}
+        .ql-editor{min-height:200px;max-height:350px;overflow-y:auto}
+        .ql-snow .ql-stroke{stroke:#7D8590!important}
+        .ql-snow .ql-fill{fill:#7D8590!important}
+        .ql-snow .ql-picker{color:#7D8590!important}
+        .ql-snow .ql-picker-options{background:#1C2333;border-color:#30363D!important}
+        .ql-snow.ql-toolbar button:hover,.ql-snow .ql-toolbar button:hover,.ql-snow.ql-toolbar button:focus,.ql-snow .ql-toolbar button:focus,.ql-snow.ql-toolbar button.ql-active,.ql-snow .ql-toolbar button.ql-active,.ql-snow.ql-toolbar .ql-picker-label:hover,.ql-snow .ql-toolbar .ql-picker-label:hover,.ql-snow.ql-toolbar .ql-picker-label.ql-active,.ql-snow .ql-toolbar .ql-picker-label.ql-active{border-color:#3B82F6!important}
+        .ql-snow.ql-toolbar button:hover .ql-stroke,.ql-snow .ql-toolbar button:hover .ql-stroke,.ql-snow.ql-toolbar button:focus .ql-stroke,.ql-snow .ql-toolbar button:focus .ql-stroke,.ql-snow.ql-toolbar button.ql-active .ql-stroke,.ql-snow .ql-toolbar button.ql-active .ql-stroke{stroke:#3B82F6!important}
+        .ql-snow.ql-toolbar button:hover .ql-fill,.ql-snow .ql-toolbar button:hover .ql-fill,.ql-snow.ql-toolbar button:focus .ql-fill,.ql-snow .ql-toolbar button:focus .ql-fill,.ql-snow.ql-toolbar button.ql-active .ql-fill,.ql-snow .ql-toolbar button.ql-active .ql-fill{fill:#3B82F6!important}
+        .ql-snow .ql-picker.ql-expanded .ql-picker-label{border-color:#3B82F6!important;color:#3B82F6!important}
+        .ql-editor.ql-blank::before{color:#7D8590!important;font-style:normal!important}
+        .ql-tooltip{background:#1C2333!important;border-color:#30363D!important;color:#E6EDF3!important;border-radius:8px}
+        .ql-tooltip input[type="text"]{background:#0D1117!important;border-color:#30363D!important;color:#E6EDF3!important;border-radius:4px}
+        .ql-tooltip .ql-action{background:#3B82F6!important;color:#fff!important;border-radius:4px}
+        .ql-tooltip .ql-action:hover{background:#2563EB!important}
+        .ql-editor h1{color:#E6EDF3;font-size:1.75em}
+        .ql-editor h2{color:#E6EDF3;font-size:1.5em}
+        .ql-editor h3{color:#E6EDF3;font-size:1.25em}
+        .ql-editor h4{color:#E6EDF3;font-size:1.1em}
+        .ql-editor h5,.ql-editor h6{color:#E6EDF3;font-size:1em}
+        .ql-editor a{color:#58A6FF!important}
+        .ql-editor blockquote{border-left:3px solid #3B82F6;padding-left:12px;color:#7D8590}
         @media(max-width:768px){#sup-sidebar{position:fixed;left:-260px;top:0;bottom:0;z-index:40;transition:left .3s}#sup-sidebar.open{left:0}#sup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:35}#sup-sidebar.open~#sup-overlay{display:block}}
     </style>
 </head>
@@ -99,7 +126,7 @@
                 <div id="form-login" class="space-y-4">
                     <div><label class="block text-sm font-medium text-avx-muted mb-1.5">Email</label><input id="li-email" type="email" placeholder="your@email.com" class="w-full bg-avx-card border border-avx-border rounded-lg px-4 py-2.5 text-avx-text placeholder-avx-muted/50 text-sm"></div>
                     <div><label class="block text-sm font-medium text-avx-muted mb-1.5">Password</label><input id="li-pass" type="password" placeholder="Enter password" class="w-full bg-avx-card border border-avx-border rounded-lg px-4 py-2.5 text-avx-text placeholder-avx-muted/50 text-sm" onkeydown="if(event.key==='Enter')handleLogin()"></div>
-                    <button onclick="handleLogin()" id="li-btn" class="w-full mt-2 bg-avx-accent hover:bg-avx-accent-h text-avx-bg font-semibold py-2.5 rounded-lg transition-all btn-glow text-sm"><i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>Sign In</button>
+                    <button onclick="handleLogin()" id="li-btn" class="w-full mt-2 bg-avx-accent hover:bg-avx-accent-h text-white font-semibold py-2.5 rounded-lg transition-all btn-glow text-sm"><i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>Sign In</button>
                 </div>
                 <div id="form-signup" class="space-y-4 hidden">
                     <div><label class="block text-sm font-medium text-avx-muted mb-1.5">Full Name</label><input id="su-name" type="text" placeholder="Enter your full name" class="w-full bg-avx-card border border-avx-border rounded-lg px-4 py-2.5 text-avx-text placeholder-avx-muted/50 text-sm"></div>
@@ -107,7 +134,7 @@
                     <div><label class="block text-sm font-medium text-avx-muted mb-1.5">Password <span class="text-avx-muted/40">(min 6 chars)</span></label><input id="su-pass" type="password" placeholder="Create a password" class="w-full bg-avx-card border border-avx-border rounded-lg px-4 py-2.5 text-avx-text placeholder-avx-muted/50 text-sm"></div>
                     <div><label class="block text-sm font-medium text-avx-muted mb-1.5">Role</label><div class="relative"><select id="su-role" class="w-full bg-avx-card border border-avx-border rounded-lg px-4 py-2.5 text-avx-text appearance-none cursor-pointer text-sm"><option value="consultant">Consultant</option><option value="tech">Tech</option><option value="supervisor">Supervisor</option></select><i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-avx-muted text-xs pointer-events-none"></i></div></div>
                     <div><label class="block text-sm font-medium text-avx-muted mb-1.5">Designation <span class="text-avx-muted/40">(optional)</span></label><input id="su-designation" type="text" placeholder="e.g. Senior Consultant" class="w-full bg-avx-card border border-avx-border rounded-lg px-4 py-2.5 text-avx-text placeholder-avx-muted/50 text-sm"></div>
-                    <button onclick="handleSignup()" id="su-btn" class="w-full mt-2 bg-avx-accent hover:bg-avx-accent-h text-avx-bg font-semibold py-2.5 rounded-lg transition-all btn-glow text-sm"><i class="fa-solid fa-user-plus mr-2"></i>Create Account</button>
+                    <button onclick="handleSignup()" id="su-btn" class="w-full mt-2 bg-avx-accent hover:bg-avx-accent-h text-white font-semibold py-2.5 rounded-lg transition-all btn-glow text-sm"><i class="fa-solid fa-user-plus mr-2"></i>Create Account</button>
                 </div>
             </div>
         </div>
@@ -149,12 +176,12 @@
         <div class="px-4 md:px-6 pb-3 shrink-0">
             <div class="flex items-end gap-2 bg-avx-surface border border-avx-border rounded-xl p-2">
                 <textarea id="chat-input" rows="1" placeholder="Type your message..." class="flex-1 bg-transparent text-avx-text text-sm placeholder-avx-muted/40 resize-none border-none px-2 py-1.5 max-h-32" onkeydown="handleChatKey(event)" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,128)+'px'"></textarea>
-                <button onclick="sendMessage()" class="shrink-0 w-9 h-9 rounded-lg bg-avx-accent hover:bg-avx-accent-h text-avx-bg flex items-center justify-center transition-all"><i class="fa-solid fa-paper-plane text-sm"></i></button>
+                <button onclick="sendMessage()" class="shrink-0 w-9 h-9 rounded-lg bg-avx-accent hover:bg-avx-accent-h text-white flex items-center justify-center transition-all"><i class="fa-solid fa-paper-plane text-sm"></i></button>
             </div>
         </div>
     </div>
     <div class="flex items-center gap-3 px-4 md:px-6 py-3 bg-avx-surface border-t border-avx-border shrink-0">
-        <button onclick="saveSession()" class="flex items-center gap-2 px-5 py-2 bg-avx-accent hover:bg-avx-accent-h text-avx-bg font-semibold rounded-lg text-sm transition-all btn-glow"><i class="fa-solid fa-floppy-disk"></i>Assisted</button>
+        <button onclick="saveSession()" class="flex items-center gap-2 px-5 py-2 bg-avx-accent hover:bg-avx-accent-h text-white font-semibold rounded-lg text-sm transition-all btn-glow"><i class="fa-solid fa-floppy-disk"></i>Assisted</button>
         <button onclick="openIncidentModal()" class="flex items-center gap-2 px-4 py-2 border border-avx-border text-avx-muted hover:text-avx-error hover:border-avx-error/40 rounded-lg text-sm transition-all"><i class="fa-solid fa-triangle-exclamation"></i>Report Incident</button>
         <button onclick="clearChat()" class="flex items-center gap-2 px-4 py-2 border border-avx-border text-avx-muted hover:text-avx-text hover:border-avx-text/30 rounded-lg text-sm transition-all ml-auto"><i class="fa-solid fa-rotate-right"></i>New Session</button>
     </div>
@@ -242,18 +269,25 @@
     </div>
 </div>
 
-<!-- KB EDIT MODAL -->
+<!-- KB EDIT MODAL - with WYSIWYG Editor -->
 <div id="kb-modal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
-    <div class="bg-avx-surface border border-avx-border rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col page-enter shadow-2xl">
+    <div class="bg-avx-surface border border-avx-border rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col page-enter shadow-2xl">
         <div class="flex items-center justify-between px-5 py-4 border-b border-avx-border shrink-0"><h3 id="kb-modal-title" class="font-display font-semibold text-avx-text">Add Knowledge</h3><button onclick="closeKbModal()" class="w-8 h-8 rounded-lg hover:bg-avx-card flex items-center justify-center text-avx-muted hover:text-avx-text transition-all"><i class="fa-solid fa-xmark"></i></button></div>
         <div class="p-5 space-y-4 overflow-y-auto flex-1">
             <input type="hidden" id="kb-edit-id">
             <div><label class="block text-xs font-medium text-avx-muted mb-1.5">Category</label><input id="kb-cat" type="text" placeholder="e.g. color, paper, pricing" class="w-full bg-avx-card border border-avx-border rounded-lg px-3 py-2 text-avx-text text-sm placeholder-avx-muted/40"></div>
             <div><label class="block text-xs font-medium text-avx-muted mb-1.5">Keywords <span class="text-avx-muted/40">(comma-separated)</span></label><input id="kb-keywords" type="text" placeholder="cmyk, rgb, color mode" class="w-full bg-avx-card border border-avx-border rounded-lg px-3 py-2 text-avx-text text-sm placeholder-avx-muted/40"></div>
             <div><label class="block text-xs font-medium text-avx-muted mb-1.5">Question / Trigger</label><input id="kb-question" type="text" placeholder="What color mode should I use?" class="w-full bg-avx-card border border-avx-border rounded-lg px-3 py-2 text-avx-text text-sm placeholder-avx-muted/40"></div>
-            <div><label class="block text-xs font-medium text-avx-muted mb-1.5">Answer <span class="text-avx-muted/40">(use &lt;strong&gt; for bold)</span></label><textarea id="kb-answer" rows="5" placeholder="All print files must be in CMYK..." class="w-full bg-avx-card border border-avx-border rounded-lg px-3 py-2 text-avx-text text-sm placeholder-avx-muted/40 resize-none"></textarea></div>
+            <!-- WYSIWYG Editor Container -->
+            <div>
+                <label class="block text-xs font-medium text-avx-muted mb-1.5">Answer <span class="text-avx-muted/40">(Use toolbar to format)</span></label>
+                <div id="kb-editor-wrapper" class="rounded-lg overflow-hidden">
+                    <!-- Quill toolbar will be injected here -->
+                    <div id="kb-answer-editor"></div>
+                </div>
+            </div>
             <div><label class="block text-xs font-medium text-avx-muted mb-1.5">Priority <span class="text-avx-muted/40">(0-10)</span></label><input id="kb-priority" type="number" min="0" max="10" value="5" class="w-24 bg-avx-card border border-avx-border rounded-lg px-3 py-2 text-avx-text text-sm"></div>
-            <button onclick="saveKbEntry()" class="w-full bg-avx-accent hover:bg-avx-accent-h text-avx-bg font-semibold py-2.5 rounded-lg text-sm transition-all"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Entry</button>
+            <button onclick="saveKbEntry()" class="w-full bg-avx-accent hover:bg-avx-accent-h text-white font-semibold py-2.5 rounded-lg text-sm transition-all"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Entry</button>
         </div>
     </div>
 </div>
@@ -266,7 +300,7 @@
             <div class="bg-avx-card rounded-lg p-4"><p class="text-sm font-medium text-avx-text mb-2">CSV Format Required:</p><code class="text-xs text-avx-accent block bg-avx-bg rounded p-3 overflow-x-auto">category,keywords,question,answer,priority
 color,"cmyk,rgb","What color mode?","Use CMYK...",8</code></div>
             <div><label class="block text-xs font-medium text-avx-muted mb-1.5">Paste CSV content</label><textarea id="import-csv" rows="8" placeholder="Paste your CSV here..." class="w-full bg-avx-card border border-avx-border rounded-lg px-3 py-2 text-avx-text text-sm placeholder-avx-muted/40 resize-none font-mono text-xs"></textarea></div>
-            <button onclick="importCSV()" class="w-full bg-avx-accent hover:bg-avx-accent-h text-avx-bg font-semibold py-2.5 rounded-lg text-sm transition-all"><i class="fa-solid fa-file-import mr-2"></i>Import</button>
+            <button onclick="importCSV()" class="w-full bg-avx-accent hover:bg-avx-accent-h text-white font-semibold py-2.5 rounded-lg text-sm transition-all"><i class="fa-solid fa-file-import mr-2"></i>Import</button>
         </div>
     </div>
 </div>
@@ -280,7 +314,7 @@ color,"cmyk,rgb","What color mode?","Use CMYK...",8</code></div>
             <div><label class="block text-xs font-medium text-avx-muted mb-1.5">Site Name <span class="text-avx-error">*</span></label><input id="site-name" type="text" placeholder="e.g. uprinting.com" class="w-full bg-avx-card border border-avx-border rounded-lg px-3 py-2 text-avx-text text-sm placeholder-avx-muted/40"></div>
             <div><label class="block text-xs font-medium text-avx-muted mb-1.5">URL <span class="text-avx-muted/40">(optional)</span></label><input id="site-url" type="text" placeholder="https://www.uprinting.com" class="w-full bg-avx-card border border-avx-border rounded-lg px-3 py-2 text-avx-text text-sm placeholder-avx-muted/40"></div>
             <div><label class="block text-xs font-medium text-avx-muted mb-1.5">Sort Order</label><input id="site-sort" type="number" min="0" value="0" class="w-24 bg-avx-card border border-avx-border rounded-lg px-3 py-2 text-avx-text text-sm"></div>
-            <button onclick="saveSite()" class="w-full bg-avx-accent hover:bg-avx-accent-h text-avx-bg font-semibold py-2.5 rounded-lg text-sm transition-all"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Site</button>
+            <button onclick="saveSite()" class="w-full bg-avx-accent hover:bg-avx-accent-h text-white font-semibold py-2.5 rounded-lg text-sm transition-all"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Site</button>
         </div>
     </div>
 </div>
@@ -293,6 +327,64 @@ const SUPABASE_URL='https://bijbeczbnvareimpfkry.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpamJlY3pibnZhcmVpbXBma3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwMzM3MjgsImV4cCI6MjA5NzYwOTcyOH0.6-SsM5r6LTnW8DUPhz05uYAc-reYE6YC2q9KoU4WDBU';
 let db;
 try{const{createClient}=supabase;db=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){console.error('Supabase init failed:',e);db=null;}
+
+// ==============================================
+// 1b. WYSIWYG EDITOR INIT
+// ==============================================
+let kbQuillEditor = null;
+
+function initKbEditor(content = '') {
+    // Destroy existing editor if any
+    if (kbQuillEditor) {
+        kbQuillEditor.off('text-change');
+        kbQuillEditor = null;
+    }
+
+    // Create new Quill instance with custom toolbar
+    kbQuillEditor = new Quill('#kb-answer-editor', {
+        theme: 'snow',
+        placeholder: 'Write your answer here... Use the toolbar to format text, add links, lists, and more!',
+        modules: {
+            toolbar: [
+                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                [{ 'align': [] }],
+                ['link', 'image'],
+                ['clean']
+            ]
+        }
+    });
+
+    // Set content if provided (for editing existing entries)
+    if (content) {
+        // Convert HTML entities back for Quill
+        const decodedContent = content
+            .replace(/&lt;strong&gt;/g, '<strong>')
+            .replace(/&lt;\/strong&gt;/g, '</strong>')
+            .replace(/&lt;em&gt;/g, '<em>')
+            .replace(/&lt;\/em&gt;/g, '</em>')
+            .replace(/&lt;u&gt;/g, '<u>')
+            .replace(/&lt;\/u&gt;/g, '</u>')
+            .replace(/&lt;s&gt;/g, '<s>')
+            .replace(/&lt;\/s&gt;/g, '</s>');
+        kbQuillEditor.root.innerHTML = decodedContent;
+    }
+
+    // Auto-save to textarea for form submission
+    kbQuillEditor.on('text-change', function() {
+        const html = kbQuillEditor.root.innerHTML;
+        // Store in a hidden field or data attribute for retrieval
+        document.getElementById('kb-answer-editor').dataset.content = html;
+    });
+}
+
+function getKbEditorContent() {
+    if (kbQuillEditor) {
+        return kbQuillEditor.root.innerHTML;
+    }
+    return '';
+}
 
 // ==============================================
 // 2. STATE
@@ -496,7 +588,6 @@ function detectIntent(text){
     if(/\b(poster|large\s?format|wide)\b/i.test(l))return'product_poster';
     if(/\b(envelope|letterhead|stationery)\b/i.test(l))return'product_stationery';
     if(/\b(package|packaging|box|carton)\b/i.test(l))return'product_packaging';
-    if(/\b(how|what|where|when|can you|could you|please|help|tell me|explain|guide)\b/i.test(l))return'question';
     return'general';
 }
 
@@ -557,7 +648,7 @@ function formatAnswer(rawAnswer){
 
 function buildSuggestionHTML(entries,label,chipClass=''){
     if(!entries||!entries.length)return'';
-    const iconClass=chipClass==='blue'?'blue':'amber';const icon=chipClass==='blue'?'fa-link':'fa-lightbulb';
+    const iconClass=chipClass==='blue'?'blue':'blue';const icon=chipClass==='blue'?'fa-link':'fa-lightbulb';
     let html=`<div class="sugg-section"><p class="sugg-label"><i class="fa-solid ${icon}"></i>${esc(label)}</p><div class="sugg-chips">`;
     for(const entry of entries){const lbl=entry.question||entry.category||'Learn more';const short=lbl.length>45?lbl.substring(0,42)+'...':lbl;html+=`<button class="sugg-chip ${chipClass}" onclick="handleSuggestionClick('${esc(lbl.replace(/'/g,"\\'"))}')"><i class="fa-solid fa-arrow-right"></i>${esc(short)}</button>`;}
     html+='</div></div>';return html;
@@ -798,11 +889,71 @@ function closeIncidentModal(){document.getElementById('incident-modal').classLis
 async function submitIncident(){const cat=document.getElementById('inc-category').value,desc=document.getElementById('inc-desc').value.trim();if(!desc)return showToast('Please describe the incident','warning');try{const{error}=await db.from('incidents').insert({user_id:S.profile.id,category:cat,description:desc});if(error)throw error;closeIncidentModal();showToast('Incident reported','success');}catch(e){showToast('Failed: '+e.message,'error');}}
 
 // ==============================================
-// 12. KB MODAL
+// 12. KB MODAL - with WYSIWYG Editor
 // ==============================================
-function openKbModal(id,cat,kw,q,a,p){document.getElementById('kb-edit-id').value=id||'';document.getElementById('kb-cat').value=cat||'';document.getElementById('kb-keywords').value=kw||'';document.getElementById('kb-question').value=q||'';document.getElementById('kb-answer').value=a||'';document.getElementById('kb-priority').value=p||5;document.getElementById('kb-modal-title').textContent=id?'Edit Knowledge':'Add Knowledge';document.getElementById('kb-modal').classList.remove('hidden');}
-function closeKbModal(){document.getElementById('kb-modal').classList.add('hidden');}
-async function saveKbEntry(){const id=document.getElementById('kb-edit-id').value,cat=document.getElementById('kb-cat').value.trim(),kw=document.getElementById('kb-keywords').value.split(',').map(s=>s.trim()).filter(Boolean),q=document.getElementById('kb-question').value.trim(),a=document.getElementById('kb-answer').value.trim(),p=parseInt(document.getElementById('kb-priority').value)||5;if(!q||!a)return showToast('Question and answer are required','warning');try{if(id){const{error}=await db.from('knowledge_base').update({category:cat,keywords:kw,question:q,answer:a,priority:p}).eq('id',id);if(error)throw error;}else{const{error}=await db.from('knowledge_base').insert({category:cat,keywords:kw,question:q,answer:a,priority:p});if(error)throw error;}kbCache=null;kbCacheTime=0;closeKbModal();showToast('Knowledge entry saved','success');if(S.supView==='knowledge')renderKnowledge(document.getElementById('sup-content'));}catch(e){showToast('Failed: '+e.message,'error');}}
+function openKbModal(id,cat,kw,q,a,p){
+    document.getElementById('kb-edit-id').value=id||'';
+    document.getElementById('kb-cat').value=cat||'';
+    document.getElementById('kb-keywords').value=kw||'';
+    document.getElementById('kb-question').value=q||'';
+    document.getElementById('kb-priority').value=p||5;
+    document.getElementById('kb-modal-title').textContent=id?'Edit Knowledge':'Add Knowledge';
+    document.getElementById('kb-modal').classList.remove('hidden');
+
+    // Initialize WYSIWYG editor after modal is shown
+    setTimeout(() => {
+        initKbEditor(a || '');
+    }, 100);
+}
+
+function closeKbModal(){
+    document.getElementById('kb-modal').classList.add('hidden');
+    // Clean up editor
+    if (kbQuillEditor) {
+        kbQuillEditor.off('text-change');
+        kbQuillEditor = null;
+    }
+}
+
+async function saveKbEntry(){
+    const id=document.getElementById('kb-edit-id').value;
+    const cat=document.getElementById('kb-cat').value.trim();
+    const kw=document.getElementById('kb-keywords').value.split(',').map(s=>s.trim()).filter(Boolean);
+    const q=document.getElementById('kb-question').value.trim();
+    // Get content from WYSIWYG editor
+    const a=getKbEditorContent();
+    const p=parseInt(document.getElementById('kb-priority').value)||5;
+
+    // Clean HTML - remove Quill's internal classes while preserving structure
+    let cleanAnswer = a
+        .replace(/class="ql-align-center"/g, 'style="text-align:center"')
+        .replace(/class="ql-align-right"/g, 'style="text-align:right"')
+        .replace(/class="ql-align-justify"/g, 'style="text-align:justify"')
+        .replace(/class="ql-align-[^"]*"/g, '')
+        .replace(/<p><br><\/p>/g, '')
+        .replace(/\s+class="ql-cursor"/g, '');
+
+    // Strip remaining Quill-specific inline styles that don't affect rendering
+    cleanAnswer = cleanAnswer.replace(/ style="[^"]*ql-[^"]*"/g, '');
+
+    if(!q)return showToast('Question is required','warning');
+    if(!cleanAnswer || cleanAnswer === '<p><br></p>' || cleanAnswer === '<p></p>')return showToast('Answer is required','warning');
+
+    try{
+        if(id){
+            const{error}=await db.from('knowledge_base').update({category:cat,keywords:kw,question:q,answer:cleanAnswer,priority:p}).eq('id',id);
+            if(error)throw error;
+        }else{
+            const{error}=await db.from('knowledge_base').insert({category:cat,keywords:kw,question:q,answer:cleanAnswer,priority:p});
+            if(error)throw error;
+        }
+        kbCache=null;kbCacheTime=0;
+        closeKbModal();
+        showToast('Knowledge entry saved','success');
+        if(S.supView==='knowledge')renderKnowledge(document.getElementById('sup-content'));
+    }catch(e){showToast('Failed: '+e.message,'error');}
+}
+
 async function deleteKbEntry(id){showConfirm('Delete entry?','This cannot be undone.',async()=>{try{await db.from('knowledge_base').update({active:false}).eq('id',id);kbCache=null;kbCacheTime=0;showToast('Entry deleted','success');if(S.supView==='knowledge')renderKnowledge(document.getElementById('sup-content'));}catch(e){showToast('Failed: '+e.message,'error');}});}
 async function importCSV(){const raw=document.getElementById('import-csv').value.trim();if(!raw)return showToast('Paste CSV content first','warning');const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);if(lines.length<2)return showToast('CSV needs a header row + data','warning');const header=lines[0].split(',').map(s=>s.trim().replace(/^"|"$/g,''));const rows=lines.slice(1).map(l=>{const vals=[];let cur='',inQ=false;for(const ch of l){if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}else{cur+=ch;}}vals.push(cur.trim());return vals;});const entries=rows.map(r=>({category:r[header.indexOf('category')]||'',keywords:(r[header.indexOf('keywords')]||'').split(',').map(s=>s.trim()).filter(Boolean),question:r[header.indexOf('question')]||'',answer:r[header.indexOf('answer')]||'',priority:parseInt(r[header.indexOf('priority')])||5}));try{const{error}=await db.from('knowledge_base').insert(entries);if(error)throw error;kbCache=null;kbCacheTime=0;document.getElementById('import-modal').classList.add('hidden');showToast(`${entries.length} entries imported`,'success');if(S.supView==='knowledge')renderKnowledge(document.getElementById('sup-content'));}catch(e){showToast('Import failed: '+e.message,'error');}}
 function openImportModal(){document.getElementById('import-csv').value='';document.getElementById('import-modal').classList.remove('hidden');}
@@ -830,6 +981,482 @@ function toggleSupSidebar(){document.getElementById('sup-sidebar').classList.tog
 // 16. KEYBOARD SHORTCUTS
 // ==============================================
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='r'){e.preventDefault();manualRefresh();}if(e.key==='F5'){e.preventDefault();manualRefresh();}});
+</script>
+
+<script>
+/**
+ * Iframe 元素高亮注入脚本
+ * 需要在目标网站中引入此脚本来支持跨域 iframe 高亮功能
+ *
+ * 使用方法：
+ * 1. 将此脚本添加到目标网站的 HTML 中
+ * 2. 或通过浏览器扩展、用户脚本等方式注入
+ */
+
+(function () {
+  "use strict";
+
+  // 检查是否在 iframe 中
+  if (window.self === window.top) {
+    return; // 不在 iframe 中，不执行
+  }
+
+  // 检查是否已经初始化过
+  if (window.__iframeHighlightInitialized) {
+    return;
+  }
+  window.__iframeHighlightInitialized = true;
+  console.log("Iframe 高亮脚本已加载");
+
+  // 创建高亮覆盖层
+  var overlay = document.createElement("div");
+  overlay.id = "iframe-highlight-overlay";
+  overlay.style.cssText = "\n    position: fixed;\n    top: 0;\n    left: 0;\n    width: 100vw;\n    height: 100vh;\n    pointer-events: none;\n    z-index: 999999;\n    overflow: hidden;\n  ";
+
+  // 创建悬停高亮框（虚线边框）
+  var highlightBox = document.createElement("div");
+  highlightBox.id = "iframe-highlight-box";
+  highlightBox.style.cssText = "\n    position: absolute;\n    border: 2px dashed #007AFF;\n    background: rgba(0, 122, 255, 0.08);\n    pointer-events: none;\n    display: none;\n    transition: all 0.1s ease;\n    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);\n    border-radius: 2px;\n  ";
+
+  // 创建选中节点的常驻高亮框（实线边框）
+  var selectedBox = document.createElement("div");
+  selectedBox.id = "iframe-selected-box";
+  selectedBox.style.cssText = "\n    position: absolute;\n    border: 2px solid #007AFF;\n    pointer-events: none;\n    display: none;\n    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9), 0 0 8px rgba(255, 107, 53, 0.4);\n    border-radius: 2px;\n    z-index: 1000000;\n  ";
+
+  // 创建悬停标签显示
+  var tagLabel = document.createElement("div");
+  tagLabel.id = "iframe-tag-label";
+  tagLabel.style.cssText = "\n    position: absolute;\n    background: #007AFF;\n    color: white;\n    padding: 2px 6px;\n    font-size: 11px;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n    border-radius: 2px;\n    pointer-events: none;\n    display: none;\n    white-space: nowrap;\n    z-index: 1000001;\n    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);\n    font-weight: 500;\n  ";
+
+  // 创建选中节点标签
+  var selectedLabel = document.createElement("div");
+  selectedLabel.id = "iframe-selected-label";
+  selectedLabel.style.cssText = "\n    position: absolute;\n    background: #007AFF;\n    color: white;\n    padding: 3px 8px;\n    font-size: 11px;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n    border-radius: 3px;\n    pointer-events: none;\n    display: none;\n    white-space: nowrap;\n    z-index: 1000002;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);\n    font-weight: 600;\n  ";
+  overlay.appendChild(highlightBox);
+  overlay.appendChild(selectedBox);
+  overlay.appendChild(tagLabel);
+  overlay.appendChild(selectedLabel);
+  document.body.appendChild(overlay);
+
+  // 存储当前选中的元素
+  var selectedElement = null;
+  var highlightEnabled = false;
+
+  // 更新选中元素的高亮显示
+  function updateSelectedHighlight(element) {
+    console.log("updateSelectedHighlight called with:", element);
+    if (!element) {
+      selectedBox.style.display = "none";
+      selectedLabel.style.display = "none";
+      selectedElement = null;
+      console.log("Cleared selected highlight");
+      return;
+    }
+    selectedElement = element;
+    var rect = element.getBoundingClientRect();
+    console.log("Selected element rect:", rect);
+
+    // 更新选中高亮框位置
+    selectedBox.style.display = "block";
+    selectedBox.style.left = "".concat(rect.left - 2, "px");
+    selectedBox.style.top = "".concat(rect.top - 2, "px");
+    selectedBox.style.width = "".concat(rect.width + 4, "px");
+    selectedBox.style.height = "".concat(rect.height + 4, "px");
+
+    // 更新选中标签位置和内容
+    selectedLabel.style.display = "block";
+    selectedLabel.textContent = "\u2713 <".concat(element.tagName.toLowerCase(), ">");
+
+    // 计算标签位置，确保不超出视窗
+    var labelTop = rect.top - 28;
+    var labelLeft = rect.left;
+
+    // 如果标签会超出顶部，显示在元素下方
+    if (labelTop < 5) {
+      labelTop = rect.bottom + 5;
+    }
+
+    // 如果标签会超出右侧，向左调整
+    var labelWidth = selectedLabel.offsetWidth || 100; // 预估宽度
+    if (labelLeft + labelWidth > window.innerWidth - 10) {
+      labelLeft = window.innerWidth - labelWidth - 10;
+    }
+    selectedLabel.style.left = "".concat(Math.max(5, labelLeft), "px");
+    selectedLabel.style.top = "".concat(labelTop, "px");
+    console.log("Selected highlight positioned at:", {
+      left: selectedBox.style.left,
+      top: selectedBox.style.top,
+      width: selectedBox.style.width,
+      height: selectedBox.style.height
+    });
+  }
+  function getElementSelector(element) {
+    if (!(element instanceof Element)) throw new Error('Argument must be a DOM element');
+    var segments = [];
+    var current = element;
+    while (current !== document.documentElement) {
+      var selector = '';
+      // 优先检查唯一ID
+      if (current.id && document.querySelectorAll("#".concat(current.id)).length === 1) {
+        segments.unshift("#".concat(current.id));
+        break; // ID唯一，无需继续向上
+      }
+
+      // 生成类名选择器（取第一个有效类名）
+      var classes = Array.from(current.classList).filter(function (c) {
+        return !c.startsWith('js-');
+      });
+      var className = classes.length > 0 ? ".".concat(classes[0]) : '';
+
+      // 生成位置索引（nth-child）
+      var tag = current.tagName.toLowerCase();
+      if (!className) {
+        var siblings = Array.from(current.parentNode.children);
+        var index = siblings.findIndex(function (el) {
+          return el === current;
+        }) + 1;
+        selector = "".concat(tag, ":nth-child(").concat(index, ")");
+      } else {
+        selector = className;
+      }
+      segments.unshift(selector);
+      current = current.parentElement;
+    }
+
+    // 处理根元素
+    if (current === document.documentElement) {
+      segments.unshift('html');
+    }
+    return segments.join(' > ');
+  }
+
+  // 获取元素文本内容
+  function getElementText(element) {
+    var _element$textContent;
+    if (element.tagName === "INPUT") {
+      return element.value || element.placeholder || "";
+    }
+    if (element.tagName === "TEXTAREA") {
+      return element.value || element.placeholder || "";
+    }
+    var text = ((_element$textContent = element.textContent) === null || _element$textContent === void 0 ? void 0 : _element$textContent.trim()) || "";
+    return text.length > 50 ? text.substring(0, 50) + "..." : text;
+  }
+
+  // 获取元素属性信息
+  function getElementAttributes(element) {
+    var attrs = {};
+    for (var i = 0; i < element.attributes.length; i++) {
+      var attr = element.attributes[i];
+      attrs[attr.name] = attr.value;
+    }
+    return attrs;
+  }
+
+  // 鼠标悬停事件处理
+  function handleMouseOver(e) {
+    if (!highlightEnabled) return;
+    var target = e.target;
+    if (!target || target === overlay || target === highlightBox || target === tagLabel || target === selectedBox || target === selectedLabel) {
+      return;
+    }
+
+    // 避免高亮 html 和 body 元素
+    if (target === document.documentElement || target === document.body) {
+      return;
+    }
+
+    // 如果是已选中的元素，不显示悬停高亮
+    if (target === selectedElement) {
+      highlightBox.style.display = "none";
+      tagLabel.style.display = "none";
+      return;
+    }
+    var rect = target.getBoundingClientRect();
+    var selector = getElementSelector(target);
+    var text = getElementText(target);
+    var attributes = getElementAttributes(target);
+
+    // 更新悬停高亮框位置
+    highlightBox.style.display = "block";
+    highlightBox.style.left = "".concat(rect.left - 2, "px");
+    highlightBox.style.top = "".concat(rect.top - 2, "px");
+    highlightBox.style.width = "".concat(rect.width + 4, "px");
+    highlightBox.style.height = "".concat(rect.height + 4, "px");
+
+    // 更新标签位置和内容
+    tagLabel.style.display = "block";
+    tagLabel.textContent = "<".concat(target.tagName.toLowerCase(), ">");
+
+    // 计算标签位置，确保不超出视窗
+    var labelTop = rect.top - 22;
+    var labelLeft = rect.left;
+
+    // 如果标签会超出顶部，显示在元素下方
+    if (labelTop < 0) {
+      labelTop = rect.bottom + 5;
+    }
+
+    // 如果标签会超出右侧，向左调整
+    if (labelLeft + tagLabel.offsetWidth > window.innerWidth) {
+      labelLeft = window.innerWidth - tagLabel.offsetWidth - 5;
+    }
+    tagLabel.style.left = "".concat(Math.max(0, labelLeft), "px");
+    tagLabel.style.top = "".concat(labelTop, "px");
+
+    // 发送消息到父窗口
+    var elementInfo = {
+      tagName: target.tagName.toLowerCase(),
+      rect: {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+        x: rect.x,
+        y: rect.y
+      },
+      selector: selector,
+      text: text,
+      attributes: attributes,
+      url: window.location.href,
+      path: window.location.pathname,
+      timestamp: Date.now()
+    };
+    try {
+      window.parent.postMessage({
+        type: "iframe-element-hover",
+        data: elementInfo,
+        source: "iframe-highlight-injector"
+      }, "*");
+    } catch (error) {
+      console.warn("无法发送消息到父窗口:", error);
+    }
+  }
+
+  // 鼠标离开事件处理
+  function handleMouseOut(e) {
+    if (!highlightEnabled) return;
+    var relatedTarget = e.relatedTarget;
+
+    // 如果鼠标移动到高亮相关元素上，不隐藏高亮
+    if (relatedTarget && (relatedTarget === highlightBox || relatedTarget === tagLabel || relatedTarget === overlay || relatedTarget === selectedBox || relatedTarget === selectedLabel)) {
+      return;
+    }
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    try {
+      window.parent.postMessage({
+        type: "iframe-element-hover",
+        data: null,
+        source: "iframe-highlight-injector"
+      }, "*");
+    } catch (error) {
+      console.warn("无法发送消息到父窗口:", error);
+    }
+  }
+
+  // 点击事件处理
+  function handleClick(e) {
+    var target = e.target;
+    if (!target || target === overlay || target === highlightBox || target === tagLabel || target === selectedBox || target === selectedLabel) {
+      return;
+    }
+
+    // 避免处理 html 和 body 元素
+    if (target === document.documentElement || target === document.body) {
+      return;
+    }
+
+    // 检查是否是交互元素，这些元素需要保留默认行为
+    var isInteractiveElement = ['input', 'textarea', 'select', 'button', 'a'].includes(target.tagName.toLowerCase());
+
+    // 如果高亮功能启用，对于非交互元素阻止默认行为和事件传播
+    if (highlightEnabled) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    var rect = target.getBoundingClientRect();
+    var selector = getElementSelector(target);
+    var text = getElementText(target);
+    var attributes = getElementAttributes(target);
+    console.log("Element clicked:", {
+      tagName: target.tagName,
+      selector: selector,
+      rect: rect
+    });
+
+    // 立即更新选中高亮
+    updateSelectedHighlight(target);
+
+    // 隐藏悬停高亮，因为现在是选中状态
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    var elementInfo = {
+      tagName: target.tagName.toLowerCase(),
+      rect: {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+        x: rect.x,
+        y: rect.y
+      },
+      selector: selector,
+      text: text,
+      attributes: attributes,
+      url: window.location.href,
+      path: window.location.pathname,
+      timestamp: Date.now()
+    };
+    try {
+      window.parent.postMessage({
+        type: "iframe-element-click",
+        data: elementInfo,
+        source: "iframe-highlight-injector"
+      }, "*");
+    } catch (error) {
+      console.warn("无法发送消息到父窗口:", error);
+    }
+  }
+
+  // 监听来自父窗口的消息
+  function handleParentMessage(event) {
+    console.log("Received message from parent:", event.data);
+    if (event.data.type === "iframe-highlight-toggle") {
+      var enabled = event.data.enabled;
+      console.log("Highlight toggle:", enabled);
+      if (enabled) {
+        enableHighlight();
+      } else {
+        disableHighlight();
+      }
+    } else if (event.data.type === "enable-iframe-highlight") {
+      console.log("Enable iframe highlight");
+      enableHighlight();
+    } else if (event.data.type === "disable-iframe-highlight") {
+      console.log("Disable iframe highlight");
+      disableHighlight();
+    } else if (event.data.type === "toggle-iframe-highlight") {
+      var _enabled = event.data.enabled !== undefined ? event.data.enabled : !highlightEnabled;
+      console.log("Toggle iframe highlight to:", _enabled);
+      if (_enabled) {
+        enableHighlight();
+      } else {
+        disableHighlight();
+      }
+    } else if (event.data.type === "update-selected-element") {
+      var selector = event.data.selector;
+      console.log("Update selected element with selector:", selector);
+      if (selector) {
+        try {
+          var element = document.querySelector(selector);
+          console.log("Found element by selector:", element);
+          updateSelectedHighlight(element);
+        } catch (error) {
+          console.warn("Failed to select element:", error);
+          updateSelectedHighlight(null);
+        }
+      } else {
+        updateSelectedHighlight(null);
+      }
+    } else if (event.data.type === "clear-selected-element") {
+      console.log("Clear selected element");
+      updateSelectedHighlight(null);
+    }
+  }
+
+  // 启用高亮功能
+  function enableHighlight() {
+    console.log("Enabling highlight");
+    document.addEventListener("mouseover", handleMouseOver, true);
+    document.addEventListener("mouseout", handleMouseOut, true);
+    document.addEventListener("click", handleClick, true);
+    highlightEnabled = true;
+    overlay.style.display = "block";
+  }
+
+  // 禁用高亮功能
+  function disableHighlight() {
+    console.log("Disabling highlight");
+    highlightEnabled = false;
+    // 保持事件监听器，但通过 highlightEnabled 变量控制行为
+    // 这样可以保留选中状态的显示
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    // 不隐藏 selectedBox 和 selectedLabel，保留选中状态
+  }
+
+  // 完全禁用高亮功能（移除所有监听器）
+  function fullyDisableHighlight() {
+    console.log("Fully disabling highlight");
+    highlightEnabled = false;
+    document.removeEventListener("mouseover", handleMouseOver, true);
+    document.removeEventListener("mouseout", handleMouseOut, true);
+    document.removeEventListener("click", handleClick, true);
+    overlay.style.display = "none";
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    selectedBox.style.display = "none";
+    selectedLabel.style.display = "none";
+  }
+
+  // 添加事件监听
+  enableHighlight();
+  window.addEventListener("message", handleParentMessage);
+
+  // 暴露全局函数供外部调用
+  window.__iframeHighlightControl = {
+    enable: enableHighlight,
+    disable: disableHighlight,
+    fullyDisable: fullyDisableHighlight,
+    isEnabled: function isEnabled() {
+      return highlightEnabled;
+    },
+    getSelectedElement: function getSelectedElement() {
+      return selectedElement;
+    },
+    updateSelected: updateSelectedHighlight,
+    // 通过消息发送开关控制
+    sendToggleMessage: function sendToggleMessage(enabled) {
+      window.parent.postMessage({
+        type: 'iframe-highlight-status',
+        enabled: enabled || highlightEnabled,
+        source: 'iframe-highlight-injector'
+      }, '*');
+    }
+  };
+
+  // 通知父窗口脚本已加载
+  try {
+    window.parent.postMessage({
+      type: "iframe-highlight-ready",
+      data: {
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        timestamp: Date.now()
+      },
+      source: "iframe-highlight-injector"
+    }, "*");
+  } catch (error) {
+    console.warn("无法发送就绪消息到父窗口:", error);
+  }
+
+  // 清理函数
+  window.__iframeHighlightCleanup = function () {
+    fullyDisableHighlight();
+    window.removeEventListener("message", handleParentMessage);
+    if (overlay.parentElement) {
+      overlay.parentElement.removeChild(overlay);
+    }
+    delete window.__iframeHighlightInitialized;
+    delete window.__iframeHighlightCleanup;
+  };
+})();
+
 </script>
 </body>
 </html>
