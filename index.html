@@ -1458,5 +1458,9 @@ document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='r'){
 })();
 
 </script>
+       <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/AVX-Tool-Hub-Assistant-Pro/sw.js');
+  }
 </body>
 </html>
