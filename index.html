@@ -334,13 +334,7 @@ try{const{createClient}=supabase;db=createClient(SUPABASE_URL,SUPABASE_ANON_KEY)
 let kbQuillEditor = null;
 
 function initKbEditor(content = '') {
-    // Destroy existing editor if any
-    if (kbQuillEditor) {
-        kbQuillEditor.off('text-change');
-        kbQuillEditor = null;
-    }
-
-    // Create new Quill instance with custom toolbar
+    if (kbQuillEditor) { kbQuillEditor.off('text-change'); kbQuillEditor = null; }
     kbQuillEditor = new Quill('#kb-answer-editor', {
         theme: 'snow',
         placeholder: 'Write your answer here... Use the toolbar to format text, add links, lists, and more!',
@@ -355,35 +349,21 @@ function initKbEditor(content = '') {
             ]
         }
     });
-
-    // Set content if provided (for editing existing entries)
     if (content) {
-        // Convert HTML entities back for Quill
-        const decodedContent = content
-            .replace(/&lt;strong&gt;/g, '<strong>')
-            .replace(/&lt;\/strong&gt;/g, '</strong>')
-            .replace(/&lt;em&gt;/g, '<em>')
-            .replace(/&lt;\/em&gt;/g, '</em>')
-            .replace(/&lt;u&gt;/g, '<u>')
-            .replace(/&lt;\/u&gt;/g, '</u>')
-            .replace(/&lt;s&gt;/g, '<s>')
-            .replace(/&lt;\/s&gt;/g, '</s>');
-        kbQuillEditor.root.innerHTML = decodedContent;
+        const decoded = content
+            .replace(/&lt;strong&gt;/g, '<strong>').replace(/&lt;\/strong&gt;/g, '</strong>')
+            .replace(/&lt;em&gt;/g, '<em>').replace(/&lt;\/em&gt;/g, '</em>')
+            .replace(/&lt;u&gt;/g, '<u>').replace(/&lt;\/u&gt;/g, '</u>')
+            .replace(/&lt;s&gt;/g, '<s>').replace(/&lt;\/s&gt;/g, '</s>');
+        kbQuillEditor.root.innerHTML = decoded;
     }
-
-    // Auto-save to textarea for form submission
     kbQuillEditor.on('text-change', function() {
-        const html = kbQuillEditor.root.innerHTML;
-        // Store in a hidden field or data attribute for retrieval
-        document.getElementById('kb-answer-editor').dataset.content = html;
+        document.getElementById('kb-answer-editor').dataset.content = kbQuillEditor.root.innerHTML;
     });
 }
 
 function getKbEditorContent() {
-    if (kbQuillEditor) {
-        return kbQuillEditor.root.innerHTML;
-    }
-    return '';
+    return kbQuillEditor ? kbQuillEditor.root.innerHTML : '';
 }
 
 // ==============================================
@@ -393,7 +373,6 @@ const S={profile:null,authUser:null,currentSessionId:null,channel:'',supView:'ho
 let msgChannel=null,convChannel=null,refreshCount=0;
 let kbCache=null,kbCacheTime=0;const KB_CACHE_TTL=60000;
 let sitesCache=null,sitesCacheTime=0;const SITES_CACHE_TTL=120000;
-// Cache for profile name lookups
 let profileNameCache=null,profileNameCacheTime=0;const PROFILE_CACHE_TTL=30000;
 
 // ==============================================
@@ -439,51 +418,28 @@ function statusBadge(st){const m={open:['status-open','Open'],in_progress:['stat
 
 // ==============================================
 // 3a. DYNAMIC DATE COLUMN DETECTION
-//     — Avoids hardcoding column names like 'created_at'
 // ==============================================
 function findDateCol(row){
     if(!row||typeof row!=='object')return null;
-    // Try common names first
     const candidates=['created_at','timestamp','inserted_at','time_created','date_created','created_on','added_at','date','datetime','updated_at'];
     for(const c of candidates){
-        if(row[c]!==null&&row[c]!==undefined){
-            const v=String(row[c]);
-            if(v.includes('T')||v.includes('-')){const d=new Date(v);if(!isNaN(d.getTime()))return c;}
-        }
+        if(row[c]!==null&&row[c]!==undefined){const v=String(row[c]);if(v.includes('T')||v.includes('-')){const d=new Date(v);if(!isNaN(d.getTime()))return c;}}
     }
-    // Fallback: scan all keys for anything that parses as a date
     for(const [k,v] of Object.entries(row)){
-        if(v===null||v===undefined)continue;
-        const vs=String(v);
+        if(v===null||v===undefined)continue;const vs=String(v);
         if(vs.includes('T')&&vs.includes('-')&&vs.length>10){const d=new Date(vs);if(!isNaN(d.getTime())&&d.getFullYear()>2020&&d.getFullYear()<2030)return k;}
     }
     return null;
 }
-
-// Sort an array of objects by the detected date column (newest first)
-function sortByDate(arr){
-    if(!arr||!arr.length)return arr;
-    const dc=findDateCol(arr[0]);
-    if(!dc)return arr;
-    return arr.slice().sort((a,b)=>{const da=new Date(a[dc]||0),db=new Date(b[dc]||0);return db-da;});
-}
-
-// Get formatted date from a row using detected column
-function getRowDate(row){
-    const dc=findDateCol(row);
-    return dc?fmtDT(row[dc]):'—';
-}
+function sortByDate(arr){if(!arr||!arr.length)return arr;const dc=findDateCol(arr[0]);if(!dc)return arr;return arr.slice().sort((a,b)=>{const da=new Date(a[dc]||0),db=new Date(b[dc]||0);return db-da;});}
+function getRowDate(row){const dc=findDateCol(row);return dc?fmtDT(row[dc]):'—';}
 
 // ==============================================
-// 3b. PROFILE NAME LOOKUP (no FK join needed)
+// 3b. PROFILE NAME LOOKUP
 // ==============================================
 async function loadProfileNames(){
     if(profileNameCache&&Date.now()-profileNameCacheTime<PROFILE_CACHE_TTL)return profileNameCache;
-    try{
-        const{data}=await db.from('profiles').select('id,name');
-        profileNameCache={};(data||[]).forEach(p=>{if(p.id)profileNameCache[p.id]=p.name||'Unknown';});
-        profileNameCacheTime=Date.now();return profileNameCache;
-    }catch(e){return profileNameCache||{};}
+    try{const{data}=await db.from('profiles').select('id,name');profileNameCache={};(data||[]).forEach(p=>{if(p.id)profileNameCache[p.id]=p.name||'Unknown';});profileNameCacheTime=Date.now();return profileNameCache;}catch(e){return profileNameCache||{};}
 }
 function getProfileName(uid){return(profileNameCache||{})[uid]||'Unknown';}
 
@@ -519,469 +475,729 @@ async function handleLogout(){
 
 db.auth.onAuthStateChange(async(ev,session)=>{if(ev==='SIGNED_IN'&&session){S.authUser=session.user;await loadProfile(session.user);}});
 
-async function loadProfile(user){
-    try{
-        const{data:profile,error}=await db.from('profiles').select('*').eq('id',user.id).single();if(error)throw error;S.profile=profile;
-        await db.from('profiles').update({login_time:now(),logout_time:null}).eq('id',user.id);S.profile.login_time=now();
-        try{await db.rpc('log_activity',{p_action:'login',p_details:{role:profile.role}});}catch(e){}
-        document.getElementById('auth-screen').classList.add('hidden');startClock();
-        if(profile.role==='supervisor'){
-            document.getElementById('sup-screen').classList.remove('hidden');document.getElementById('sup-welcome').textContent=`Welcome, ${profile.name}`;switchSupView('home');loadActiveCount();
-        }else{
-            document.getElementById('ct-screen').classList.remove('hidden');document.getElementById('ct-welcome').textContent=`Welcome, ${profile.name}`;document.getElementById('ct-role-label').textContent=cap(profile.role)+(profile.designation?' — '+profile.designation:'');
-            await loadSitesDropdown();await createNewSession();
+// ==============================================
+// 5. PARAPHRASE ENGINE
+//    Every KB answer is naturally rephrased —
+//    never returned verbatim. Varied, human-like.
+// ==============================================
+const Paraphraser={
+    _seen:new Map(),
+    _recent:[],
+    _openers:{
+        direct:[
+            "Great question! Here's the gist:",
+            "Sure thing — let me walk you through that.",
+            "I can help with that. Here's what you need to know:",
+            "Good question. So basically,",
+            "Here's how that works:",
+            "Let me break that down for you:",
+            "Absolutely! Here's the deal:",
+            "I've got you covered on that one.",
+            "Yeah, so the way that works is",
+            "Let me pull that up for you.",
+            "Happy to help! Here's what I found:",
+            "So here's the thing with that:",
+            "Alright, here's a quick rundown:",
+            "Let me shed some light on that for you.",
+            "No problem — here's what I can tell you:"
+        ],
+        confirmatory:[
+            "That's right. To give you a bit more detail,",
+            "Exactly. And to elaborate a bit,",
+            "You're on the right track. More specifically,",
+            "Spot on. Let me add a little more context:",
+            "Yes, that's correct. Here's the fuller picture:"
+        ],
+        stepByStep:[
+            "Let me walk you through this step by step.",
+            "Here's a quick step-by-step for you:",
+            "I'll lay this out in order so it's easy to follow.",
+            "Breaking it down into steps for you:",
+            "Here's the process, nice and simple:"
+        ],
+        short:[
+            "In short:",
+            "The quick answer is",
+            "Basically,",
+            "Long story short,",
+            "To keep it brief,",
+            "Put simply,"
+        ],
+        detailed:[
+            "Let me give you the full picture on this one.",
+            "Here's a thorough breakdown for you:",
+            "I'll go into some detail so you have everything you need.",
+            "Let me cover this comprehensively:",
+            "There's a fair bit to unpack here, so bear with me:"
+        ]
+    },
+    _closers:[
+        "Hope that clears things up!",
+        "Let me know if you need anything else on this.",
+        "Does that make sense? Feel free to ask if not.",
+        "Hope that helps — happy to dig deeper if needed.",
+        "Give me a shout if you have any follow-up questions.",
+        "Anything else you'd like to know about this?",
+        "That should cover it, but I'm here if you need more.",
+        "Feel free to come back if anything's still unclear.",
+        "Hope that points you in the right direction!",
+        "Let me know if there's anything else I can help with.",
+        "","","",""
+    ],
+    _bridges:[
+        "Also,","On top of that,","Another thing to keep in mind —",
+        "Plus,","And importantly,","What's more,","Additionally,",
+        "Beyond that,","It's also worth noting that","One more thing —",
+        "As a side note,","Furthermore,"
+    ],
+    _syns:{
+        'use':['go with','opt for','work with','stick with','choose','select'],
+        'make sure':['ensure','double-check that','verify that','be certain to','see to it that'],
+        'recommended':['suggested','advised','a good idea','best practice','the way to go'],
+        'required':['necessary','needed','essential','a must','mandatory'],
+        'important':['crucial','key','critical','worth prioritizing','vital'],
+        'should':['you\'ll want to','it\'s a good idea to','I\'d suggest','your best bet is to'],
+        'need to':['have to','will need to','are going to want to','must'],
+        'can':['are able to','have the option to','can certainly'],
+        'will':['is going to','should','is set to','you can expect it to'],
+        'always':['consistently','every time','without exception','as a rule'],
+        'never':['avoid','don\'t','refrain from','skip'],
+        'before':['ahead of','prior to','in advance of'],
+        'after':['once','following','when you\'re done with'],
+        'because':['since','given that','the reason being'],
+        'however':['that said','on the flip side','keep in mind though','but here\'s the catch —'],
+        'for example':['for instance','say','like','such as'],
+        'check':['verify','confirm','take a look at','review','double-check'],
+        'set up':['configure','get going','prepare','arrange'],
+        'create':['put together','build','set up','make'],
+        'change':['adjust','modify','update','tweak','alter'],
+        'click':['select','tap','hit','go ahead and click'],
+        'page':['screen','section','area'],
+        'option':['setting','choice','selection'],
+        'issue':['problem','hiccup','snag','trouble'],
+        'fix':['resolve','sort out','take care of','address'],
+        'information':['details','info','the specifics','the rundown'],
+        'process':['workflow','steps','procedure','flow'],
+        'make sure to':['don\'t forget to','remember to','be sure to','see that you'],
+        'in order to':['so you can','to be able to','for the purpose of'],
+        'depending on':['based on','varying by','according to'],
+        'specifically':['namely','in particular','to be exact'],
+        'generally':['for the most part','in most cases','typically','as a general rule'],
+        'available':['accessible','on hand','ready to use','at your disposal'],
+        'different':['various','multiple','several','a range of'],
+        'provide':['supply','give you','offer','deliver'],
+        'ensure':['make certain','guarantee','see to it that','confirm that'],
+        'about':['roughly','approximately','around','in the neighborhood of'],
+        'often':['frequently','commonly','more often than not','in many cases'],
+        'quickly':['promptly','fast','without delay','in no time'],
+        'easily':['without much hassle','with no trouble','straightforwardly','painlessly'],
+        'exactly':['precisely','spot-on','to the letter'],
+        'please note':['keep in mind','bear in mind','just a heads-up','worth noting'],
+        'note that':['remember that','be aware that','one thing to know —'],
+        'first':['to start','initially','right off the bat','as a first step'],
+        'then':['next','after that','from there','moving on'],
+        'finally':['lastly','to wrap things up','and to finish off','as a last step'],
+        'basically':['essentially','at its core','fundamentally','in essence'],
+        'actually':['in reality','as it turns out','truth be told'],
+        'also':['on top of that','what\'s more','plus','additionally'],
+        'but':['however','that said','though','on the other hand'],
+        'so':['therefore','which means','as a result','that\'s why'],
+        'if':['in case','whenever','assuming','provided that'],
+        'when':['once','as soon as','at the point when','the moment']
+    },
+    _pick(arr,exc){
+        if(!arr||arr.length<=1)return arr&&arr[0]||'';
+        let p=arr;
+        if(exc>0&&this._recent.length>0){
+            const r=new Set(this._recent.slice(-exc));
+            const f=arr.filter(x=>!r.has(x));
+            if(f.length>0)p=f;
         }
-        showToast(`Signed in as ${cap(profile.role)}`,'success');
-    }catch(e){console.error('Profile load error:',e);showToast('Could not load profile: '+e.message,'error');try{await db.auth.signOut();}catch(x){}}
-}
+        const v=p[Math.floor(Math.random()*p.length)];
+        this._recent.push(v);
+        if(this._recent.length>30)this._recent.shift();
+        return v;
+    },
+    _html2txt(h){
+        if(!h)return'';
+        let t=h;
+        t=t.replace(/<\/p>/gi,'\n').replace(/<\/li>/gi,'\n').replace(/<\/div>/gi,'\n')
+          .replace(/<\/h[1-6]>/gi,'\n').replace(/<br\s*\/?>/gi,'\n')
+          .replace(/<li[^>]*>/gi,'• ')
+          .replace(/<strong[^>]*>(.*?)<\/strong>/gi,'$1')
+          .replace(/<b[^>]*>(.*?)<\/b>/gi,'$1')
+          .replace(/<em[^>]*>(.*?)<\/em>/gi,'$1')
+          .replace(/<i[^>]*>(.*?)<\/i>/gi,'$1')
+          .replace(/<u[^>]*>(.*?)<\/u>/gi,'$1')
+          .replace(/<s[^>]*>(.*?)<\/s>/gi,'$1')
+          .replace(/<strike[^>]*>(.*?)<\/strike>/gi,'$1')
+          .replace(/<[^>]+>/g,'')
+          .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+          .replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&nbsp;/g,' ');
+        return t.replace(/\n{3,}/g,'\n\n').replace(/[ \t]+/g,' ').trim();
+    },
+    _applySyn(s){
+        let r=s;let rep=0;const mx=1+Math.floor(Math.random()*2);
+        const entries=Object.entries(this._syns).sort((a,b)=>b[0].length-a[0].length);
+        for(const[orig,syns]of entries){
+            if(rep>=mx)break;
+            const rx=new RegExp('\\b'+orig.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','gi');
+            if(rx.test(r)){
+                const syn=syns[Math.floor(Math.random()*syns.length)];
+                const m=r.match(rx);
+                if(m){
+                    const repl=m[0][0]===m[0].toUpperCase()?syn.charAt(0).toUpperCase()+syn.slice(1):syn;
+                    r=r.replace(rx,repl);rep++;
+                }
+            }
+        }
+        return r;
+    },
+    _restructure(s){
+        const pats=[
+            {rx:/^You should (.+)$/i,fn:m=>{const o=[`${m[1]} — that's what I'd suggest.`,`Your best bet is to ${m[1].toLowerCase()}.`,`I'd recommend going ahead and ${m[1].toLowerCase()}.`,`What you'll want to do is ${m[1].toLowerCase()}.`];return o[Math.floor(Math.random()*o.length)];}},
+            {rx:/^It is important to (.+)$/i,fn:m=>{const o=[`Make it a point to ${m[1].toLowerCase()}.`,`You'll definitely want to ${m[1].toLowerCase()}.`,`Prioritizing ${m[1].toLowerCase()} is key here.`,`Don't skip ${m[1].toLowerCase()} — it really matters.`];return o[Math.floor(Math.random()*o.length)];}},
+            {rx:/^Make sure to (.+)$/i,fn:m=>{const o=[`Don't forget to ${m[1].toLowerCase()}.`,`Be sure you ${m[1].toLowerCase()}.`,`Double-check that you ${m[1].toLowerCase()}.`,`See to it that ${m[1].toLowerCase()}.`];return o[Math.floor(Math.random()*o.length)];}},
+            {rx:/^Make sure (.+)$/i,fn:m=>{const o=[`Don't forget ${m[1].toLowerCase()}.`,`Be sure ${m[1].toLowerCase()}.`,`Double-check that ${m[1].toLowerCase()}.`,`See to it that ${m[1].toLowerCase()}.`];return o[Math.floor(Math.random()*o.length)];}},
+            {rx:/^(.+) is required\.?$/i,fn:m=>{const o=[`You'll need ${m[1].toLowerCase()}.`,`${m[1]} is a must-have.`,`Make sure you have ${m[1].toLowerCase()} on hand.`,`${m[1]} — that's non-negotiable.`];return o[Math.floor(Math.random()*o.length)];}},
+            {rx:/^The (.+?) is (.+)$/i,fn:m=>{const o=[`When it comes to ${m[1].toLowerCase()}, it serves as ${m[2].toLowerCase()}.`,`${m[2]} — that's essentially what the ${m[1].toLowerCase()} is for.`,`Think of the ${m[1].toLowerCase()} as ${m[2].toLowerCase()}.`];return o[Math.floor(Math.random()*o.length)];}},
+            {rx:/^You can (.+?) by (.+)$/i,fn:m=>{const o=[`To ${m[1].toLowerCase()}, just ${m[2].toLowerCase()}.`,`${m[2]} — that's how you ${m[1].toLowerCase()}.`,`The way to ${m[1].toLowerCase()} is to ${m[2].toLowerCase()}.`,`Want to ${m[1].toLowerCase()}? Just ${m[2].toLowerCase()}.`];return o[Math.floor(Math.random()*o.length)];}},
+        ];
+        for(const p of pats){const m=s.match(p.rx);if(m)return p.fn(m);}
+        return null;
+    },
+    _detectType(t){
+        if(/\b(step|first|then|next|after that|finally|lastly)\b/i.test(t)||/^[•\-\*\d]/m.test(t))return'stepByStep';
+        if(t.split(/\s+/).length<25)return'short';
+        if(t.split(/\s+/).length>80)return'detailed';
+        return'direct';
+    },
+    _txt2html(t){
+        let h=esc(t);
+        const blocks=h.split(/\n\n+/);
+        if(blocks.length>1)h=blocks.map(b=>`<p>${b.replace(/\n/g,'<br>')}</p>`).join('');
+        else h=h.replace(/\n/g,'<br>');
+        h=h.replace(/^• (.+)$/gm,'<li>$1</li>');
+        h=h.replace(/(<li>.*<\/li>\n?)+/g,m=>`<ul>${m}</ul>`);
+        h=h.replace(/^\d+\. (.+)$/gm,'<li>$1</li>');
+        return h;
+    },
+    paraphrase(rawHtml,kbEntry){
+        const id=kbEntry?.id||'x';
+        const seen=(this._seen.get(id)||0)+1;
+        this._seen.set(id,seen);
+        const plain=this._html2txt(rawHtml);
+        if(!plain||plain.length<3)return"I don't have specific details on that at the moment. Could you try rephrasing your question?";
+        const ctype=this._detectType(plain);
+        const exc=Math.min(seen,5);
+        let opener=this._pick(this._openers[ctype]||this._openers.direct,exc);
+        if(seen>2&&Math.random()<0.3)opener=this._pick(this._openers.short,exc);
+        let body='';
+        if(/^[•\-\*\d]/m.test(plain)){
+            const items=plain.split(/\n/).filter(l=>l.trim());
+            const pi=items.map(i=>{
+                let c=i.replace(/^[•\-\*\d]+[.)]\s*/,'').trim();
+                c=this._applySyn(c);
+                return this._restructure(c)||c;
+            });
+            if(pi.length<=3&&Math.random()<0.4)body=pi.join(', and ');
+            else body=pi.map(i=>`• ${i}`).join('\n');
+        }else{
+            const paras=plain.split(/\n\s*\n/).filter(p=>p.trim());
+            body=paras.map(para=>{
+                const sents=para.replace(/([.!?])\s+/g,'$1\n').split('\n').filter(s=>s.trim());
+                return sents.map((sent,si)=>{
+                    let r=this._restructure(sent);
+                    if(!r)r=this._applySyn(sent);
+                    if(si>0&&Math.random()<0.25&&paras.length>1){
+                        const br=this._pick(this._bridges,3);
+                        r=br+' '+r.charAt(0).toLowerCase()+r.slice(1);
+                    }
+                    return r;
+                }).join(' ');
+            }).join('\n\n');
+        }
+        let closer=Math.random()<0.5?this._pick(this._closers,3):'';
+        let fin='';
+        if(opener){
+            if(opener.endsWith(':')||opener.endsWith(','))
+                fin=opener+' '+body.charAt(0).toLowerCase()+body.slice(1);
+            else if(opener.endsWith('.'))
+                fin=opener+'\n\n'+body;
+            else
+                fin=opener+' '+body.charAt(0).toLowerCase()+body.slice(1);
+        }else fin=body;
+        if(closer)fin+='\n\n'+closer;
+        return this._txt2html(fin);
+    },
+    noMatch(){
+        const fb=[
+            "Hmm, I'm not finding a direct match for that. Could you try rephrasing, or ask about something specific like color settings, paper types, or file requirements?",
+            "I don't have a precise answer for that one right now. If you can narrow it down — maybe pricing, production, or file specs — I'll do my best.",
+            "That's a bit outside what I have on file. Try asking in a different way, or I can help with common topics like print specs, ordering, or turnaround times.",
+            "I'm drawing a blank on that specific question. Want to try wording it differently? I work best with questions about print processes, file setup, and order details.",
+            "Not quite sure about that one. Could you give me a bit more context? I'm strongest with product, print spec, and order process questions."
+        ];
+        return this._pick(fb,3);
+    },
+    reset(){this._seen.clear();this._recent=[];}
+};
 
 // ==============================================
-// 5. PRODUCT SITES
-// ==============================================
-async function loadSites(){
-    if(sitesCache&&Date.now()-sitesCacheTime<SITES_CACHE_TTL)return sitesCache;
-    try{const{data,error}=await db.from('product_sites').select('*').eq('active',true);if(error)throw error;sitesCache=data||[];sitesCacheTime=Date.now();return sitesCache;}
-    catch(e){console.error('Sites load error:',e);return sitesCache||[];}
-}
-async function loadSitesDropdown(){
-    const sites=await loadSites();const sel=document.getElementById('ct-site');const cv=sel.value;
-    sel.innerHTML='<option value="">Select site</option>'+sites.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');
-    if(cv)sel.value=cv;
-}
-
-// ==============================================
-// 6. KNOWLEDGE BASE — Smart Query Engine
+// 6. KNOWLEDGE BASE SEARCH
 // ==============================================
 async function loadKB(){
     if(kbCache&&Date.now()-kbCacheTime<KB_CACHE_TTL)return kbCache;
-    try{const{data,error}=await db.from('knowledge_base').select('*').eq('active',true);if(error)throw error;kbCache=data||[];kbCacheTime=Date.now();return kbCache;}
-    catch(e){console.error('KB load error:',e);return kbCache||[];}
+    try{const{data,error}=await db.from('knowledge_base').select('*').order('priority',{ascending:false});if(error)throw error;kbCache=data||[];kbCacheTime=Date.now();return kbCache;}catch(e){console.error('KB load error:',e);return kbCache||[];}
 }
 
-const CAT_RELATIONS={color:['design','file','paper','print','resolution','cmyk','rgb','pantone'],paper:['color','finishing','binding','material','stock','weight','coating','lamination'],shipping:['delivery','turnaround','rush','order','tracking','transit'],file:['design','color','resolution','format','dpi','bleed','trim','margin','upload','pdf'],pricing:['discount','bulk','quote','order','cost','rate','wholesale'],design:['file','color','template','artwork','bleed','trim','layout'],finishing:['paper','binding','lamination','coating','fold','cut','uv','spot'],binding:['finishing','paper','booklet','catalog','saddle','perfect','coil'],resolution:['file','dpi','quality','print','image'],turnaround:['shipping','rush','production','order','expedite','time'],template:['design','file','format','artwork','layout','size'],artwork:['design','file','color','template','upload','proof'],lamination:['finishing','coating','paper','protection','matte','glossy'],coating:['finishing','lamination','paper','finish','aqueous','uv'],bleed:['file','trim','margin','design','safety','template'],trim:['bleed','file','size','cut','finish','die'],fold:['binding','finishing','brochure','paper','accordion','gate'],bulk:['pricing','discount','order','wholesale','quantity'],discount:['pricing','bulk','promo','offer','coupon'],rush:['turnaround','shipping','expedite','production','fast'],envelope:['paper','printing','mailing','stationery','size'],sticker:['material','cut','lamination','printing','die','vinyl'],banner:['material','size','resolution','outdoor','mesh','vinyl'],'business card':['paper','finish','coating','bleed','stock','spot uv'],flyer:['paper','size','fold','bleed','printing'],brochure:['fold','paper','binding','bleed','tri-fold'],postcard:['paper','size','mailing','coating','stamp'],poster:['resolution','size','paper','coating','large format'],label:['material','cut','sticker','printing','roll','sheet'],packaging:['material','design','finish','printing','box','cardboard'],booklet:['binding','fold','paper','page','saddle stitch'],catalog:['binding','paper','page','finish','product'],product:['pricing','size','material','finish','specification'],order:['shipping','turnaround','pricing','tracking','status','reorder'],delivery:['shipping','turnaround','tracking','time','address'],proof:['design','file','approval','print','check'],print:['color','paper','resolution','quality','production']};
-
-function detectIntent(text){
-    const l=text.toLowerCase();
-    if(/^(hi|hello|hey|good\s?(morning|afternoon|evening)|howdy|greetings|what'?s up)/.test(l))return'greeting';
-    if(/\b(price|cost|how much|rate|charge|quote|pricing|afford|expensive|cheap|budget)\b/i.test(l))return'pricing';
-    if(/\b(ship|deliver|track|transit|fedex|ups|usps|dhl|freight|mailing|postage)\b/i.test(l))return'shipping';
-    if(/\b(file|upload|pdf|ai|eps|format|dpi|resolution|bleed|trim|margin|export|save|artwork)\b/i.test(l))return'file_prep';
-    if(/\b(paper|stock|cardstock|weight|thickness|finish|matte|glossy|uncoated|text\s?weight|cover\s?weight)\b/i.test(l))return'material';
-    if(/\b(color|cmyk|rgb|pantone|spot\s?color|print\s?color|color\s?mode|color\s?space)\b/i.test(l))return'color';
-    if(/\b(size|dimension|width|height|large|small|a4|letter|legal|tabloid|custom\s?size)\b/i.test(l))return'sizing';
-    if(/\b(turnaround|how long|fast|rush|expedite|production\s?time|lead\s?time|processing)\b/i.test(l))return'turnaround';
-    if(/\b(reorder|order\s?again|repeat\s?order|same\s?as)\b/i.test(l))return'reorder';
-    if(/\b(quality|defect|issue|problem|wrong|damaged|smudge|misalign|crooked|blurry)\b/i.test(l))return'quality';
-    if(/\b(cancel|refund|return|money\s?back|complaint|unsatisfied)\b/i.test(l))return'complaint';
-    if(/\b(discount|promo|coupon|offer|deal|sale|special)\b/i.test(l))return'discount';
-    if(/\b(template|design\s?template|layout|blank|start\s?from)\b/i.test(l))return'template';
-    if(/\b(proof|approval|review|check|verify|confirm\s?design)\b/i.test(l))return'proof';
-    if(/\b(fold|folding|bi.?fold|tri.?fold|accordion|gate\s?fold)\b/i.test(l))return'folding';
-    if(/\b(bind|binding|saddle|perfect\s?bind|coil|spiral|stitch)\b/i.test(l))return'binding';
-    if(/\b(laminate|lamination|coating|uv\s?coat|aqueous|varnish)\b/i.test(l))return'coating';
-    if(/\b(business\s?card|businesscard|b.?card)\b/i.test(l))return'product_bc';
-    if(/\b(flyer|flier|handout)\b/i.test(l))return'product_flyer';
-    if(/\b(brochure|pamphlet|booklet)\b/i.test(l))return'product_brochure';
-    if(/\b(banner|signage|sign)\b/i.test(l))return'product_banner';
-    if(/\b(sticker|label|decal)\b/i.test(l))return'product_sticker';
-    if(/\b(postcard|mail\s?card)\b/i.test(l))return'product_postcard';
-    if(/\b(poster|large\s?format|wide)\b/i.test(l))return'product_poster';
-    if(/\b(envelope|letterhead|stationery)\b/i.test(l))return'product_stationery';
-    if(/\b(package|packaging|box|carton)\b/i.test(l))return'product_packaging';
-    return'general';
-}
-
-async function queryKBSmart(text){
-    const entries=await loadKB();
-    const result={best:null,alternatives:[],related:[],allScored:[],intent:detectIntent(text)};
-    if(!entries||!entries.length)return result;
-    const lower=text.toLowerCase().replace(/[^a-z0-9\s\/\-\.\#]/g,'');
-    const words=lower.split(/\s+/).filter(w=>w.length>1);
-    result.allScored=entries.map(entry=>{
-        let score=0;const kwList=(entry.keywords||[]).map(k=>k.toLowerCase());const qLower=(entry.question||'').toLowerCase();const catLower=(entry.category||'').toLowerCase();const qWords=qLower.split(/\s+/).filter(w=>w.length>2);
-        for(const kw of kwList){if(lower.includes(kw))score+=kw.length*1.2;}
-        for(const kw of kwList){if(kw.length>3){for(const word of words){if(word.length>3&&(word.includes(kw)||kw.includes(word)))score+=Math.min(word.length,kw.length)*0.5;}}}
-        for(const qw of qWords){for(const word of words){if(word===qw)score+=2.5;else if(word.length>3&&qw.length>3&&(word.includes(qw)||qw.includes(word)))score+=1;}}
-        const userWordsLower=words.join(' ');if(catLower.length>2&&userWordsLower.includes(catLower))score+=3;
-        const intentCatMap={color:'color',material:'paper',file_prep:'file',shipping:'shipping',pricing:'pricing',sizing:'size',turnaround:'turnaround',folding:'fold',binding:'binding',coating:'lamination',product_bc:'business card',product_flyer:'flyer',product_brochure:'brochure',product_banner:'banner',product_sticker:'sticker',product_postcard:'postcard',product_poster:'poster',product_stationery:'envelope',product_packaging:'packaging',template:'template',proof:'proof',discount:'discount'};
-        const mappedCat=intentCatMap[result.intent];if(mappedCat&&catLower.includes(mappedCat))score+=4;
-        return{entry,score};
+function searchKB(query,kbEntries){
+    if(!query||!kbEntries||!kbEntries.length)return[];
+    const qWords=query.toLowerCase().replace(/[^\w\s]/g,' ').split(/\s+/).filter(w=>w.length>1);
+    if(!qWords.length)return[];
+    const scored=kbEntries.map(entry=>{
+        let score=0;
+        const keywords=(entry.keywords||'').toLowerCase().split(',').map(k=>k.trim()).filter(k=>k);
+        const question=(entry.question||'').toLowerCase();
+        const answer=(entry.answer||'').toLowerCase().replace(/<[^>]+>/g,'');
+        const category=(entry.category||'').toLowerCase();
+        const priority=entry.priority||5;
+        if(question.includes(query.toLowerCase()))score+=50;
+        for(const kw of keywords){for(const qw of qWords){if(kw===qw)score+=20;else if(kw.includes(qw)||qw.includes(kw))score+=10;}}
+        for(const qw of qWords){if(question.includes(qw))score+=8;if(answer.includes(qw))score+=3;if(category.includes(qw))score+=5;}
+        score+=priority*0.5;
+        return{...entry,_score:score};
     });
-    result.allScored.sort((a,b)=>b.score-a.score);
-    const top=result.allScored[0];if(top&&top.score>1.5)result.best=top;
-    result.alternatives=result.allScored.slice(1,5).filter(s=>s.score>0.8);
-    if(result.best){
-        const bestCat=(result.best.entry.category||'').toLowerCase();const bestKw=(result.best.entry.keywords||[]).map(k=>k.toLowerCase());const relatedCats=CAT_RELATIONS[bestCat]||[];
-        result.related=entries.filter(e=>e.id!==result.best.entry.id).map(e=>{let rScore=0;const eCat=(e.category||'').toLowerCase();const eKw=(e.keywords||[]).map(k=>k.toLowerCase());if(eCat===bestCat)rScore+=5;if(relatedCats.some(rc=>eCat.includes(rc)||rc.includes(eCat)))rScore+=3;for(const kw of eKw){if(bestKw.includes(kw))rScore+=2;}return{entry:e,rScore};}).filter(r=>r.rScore>0).sort((a,b)=>b.rScore-a.rScore).slice(0,4).map(r=>r.entry);
-    }
-    return result;
+    return scored.filter(e=>e._score>3).sort((a,b)=>b._score-a._score);
 }
-
-function buildSmartResponse(match,userText){
-    const{best,alternatives,related,allScored,intent}=match;
-    if(intent==='greeting'){
-        let greet="Hello! I'm here to help you with any printing questions. ";
-        const topicMatch=allScored.find(s=>s.score>2);
-        if(topicMatch){greet+=`I see you might be asking about <strong>${esc(topicMatch.entry.question)}</strong> — `;greet+=formatAnswer(topicMatch.entry.answer);if(related.length>0)greet+=buildSuggestionHTML(related,'You might also want to know about');}
-        else{greet+="What can I help you with today? I can assist with file preparation, color specifications, paper stocks, shipping, pricing, product details, and more.";}
-        return greet;
-    }
-    if(best){let response='';response+=getConversationalOpener(intent,best.entry);response+=formatAnswer(best.entry.answer);if(related.length>0)response+=buildSuggestionHTML(related,'Related topics you might find helpful');if(alternatives.length>0&&alternatives[0].score>2){const altEntries=alternatives.slice(0,2).map(a=>a.entry);response+=buildSuggestionHTML(altEntries,'You may also want to check','blue');}return response;}
-    return buildNoMatchResponse(userText,allScored,alternatives,intent);
-}
-
-function getConversationalOpener(intent,entry){
-    const cat=(entry.category||'').toLowerCase();
-    const openers={pricing:["Based on our pricing information, ","Here's what I can share about pricing — ","When it comes to pricing, "],shipping:["Here's what you need to know about shipping — ","For shipping details, ","Regarding delivery options, "],file_prep:["For file preparation, here are the key points — ","Here's a quick guide on file specs — ","When setting up your file, "],material:["Regarding paper and material options — ","Here's what I can tell you about our paper stocks — ","For material specifications, "],color:["When it comes to color specifications — ","Here's the key info on color — ","For color accuracy, "],sizing:["For sizing and dimensions — ","Here are the details on sizes — ","Regarding dimensions, "],turnaround:["Here's what you need to know about turnaround — ","For production timing, ","Regarding how long things take, "],quality:["Here's our guidance on quality — ","For quality-related questions — ","Regarding print quality, "],complaint:["I understand your concern. Here's what I can share — ","I'm sorry to hear that. Here's what you should know — ","Let me help with that — "],discount:["Here's what I can share about discounts — ","Regarding promotional offers — ","For discount information, "],template:["Here's what I can tell you about templates — ","For template-related questions — ","Regarding design templates, "],proof:["Here's how proofs work — ","Regarding proof and approval — ","For proof review details, "],folding:["Here's what you need to know about folding — ","For folding options — ","Regarding fold types, "],binding:["Here's the info on binding methods — ","For binding options — ","Regarding binding types, "],coating:["Here's what I can share about finishes — ","For coating and lamination options — ","Regarding print finishing, "],question:["Here's what I found — ","Great question! Here's the answer — ","Let me look that up for you — "],general:["Here's what I found — ","Let me share what I have on that — ","Here's the information — "],product_bc:["For business cards — ","Here's what you need to know about business cards — ","Regarding business card specs — "],product_flyer:["For flyers — ","Here's the info on flyers — ","Regarding flyer specifications — "],product_brochure:["For brochures — ","Here's what I can share about brochures — ","Regarding brochure options — "],product_banner:["For banners — ","Here's the banner information — ","Regarding banner specs — "],product_sticker:["For stickers and labels — ","Here's what I can tell you about stickers — ","Regarding sticker specs — "],product_postcard:["For postcards — ","Here's the postcard information — ","Regarding postcard details — "],product_poster:["For posters — ","Here's the poster specifications — ","Regarding poster printing — "],product_stationery:["For stationery — ","Here's the stationery info — ","Regarding envelopes and letterheads — "],product_packaging:["For packaging — ","Here's what I can share about packaging — ","Regarding packaging options — "]};
-    const categoryOpeners={color:"When it comes to color — ",paper:"Regarding paper stocks — ",file:"For file specifications — ",shipping:"About shipping — ",pricing:"On pricing — ",design:"For design guidelines — ",finishing:"Regarding finishing options — ",binding:"For binding methods — ",resolution:"About resolution — ",turnaround:"On turnaround times — ",template:"For templates — ",artwork:"Regarding artwork — ",lamination:"About lamination — ",coating:"For coating options — ",bleed:"Regarding bleed and trim — ",trim:"About trim specifications — ",fold:"For folding options — ",bulk:"On bulk orders — ",discount:"Regarding discounts — ",rush:"For rush orders — ",envelope:"About envelopes — ",sticker:"For stickers — ",banner:"Regarding banners — ",'business card':"For business cards — ",flyer:"About flyers — ",brochure:"For brochures — ",postcard:"Regarding postcards — ",poster:"About posters — ",label:"For labels — ",packaging:"Regarding packaging — ",booklet:"For booklets — ",catalog:"About catalogs — ",order:"Regarding orders — ",delivery:"For delivery — ",proof:"About proofs — ",print:"On print specifications — ",product:"Regarding products — "};
-    const intentOpts=openers[intent];if(intentOpts)return intentOpts[Math.floor(Math.random()*intentOpts.length)];
-    const catOpener=categoryOpeners[cat];if(catOpener)return catOpener;
-    return"Here's what I found — ";
-}
-
-function formatAnswer(rawAnswer){
-    if(!rawAnswer)return'';
-    let html=rawAnswer;html=html.replace(/&lt;strong&gt;/g,'<strong>').replace(/&lt;\/strong&gt;/g,'</strong>');
-    if(!html.includes('<p>')&&!html.includes('<ul>')&&!html.includes('<br')){const parts=html.split(/\n\n+/);if(parts.length>1){html=parts.map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');}else if(html.includes('\n')){html='<p>'+html.replace(/\n/g,'<br>')+'</p>';}}
-    return`<div class="resp-body">${html}</div>`;
-}
-
-function buildSuggestionHTML(entries,label,chipClass=''){
-    if(!entries||!entries.length)return'';
-    const iconClass=chipClass==='blue'?'blue':'blue';const icon=chipClass==='blue'?'fa-link':'fa-lightbulb';
-    let html=`<div class="sugg-section"><p class="sugg-label"><i class="fa-solid ${icon}"></i>${esc(label)}</p><div class="sugg-chips">`;
-    for(const entry of entries){const lbl=entry.question||entry.category||'Learn more';const short=lbl.length>45?lbl.substring(0,42)+'...':lbl;html+=`<button class="sugg-chip ${chipClass}" onclick="handleSuggestionClick('${esc(lbl.replace(/'/g,"\\'"))}')"><i class="fa-solid fa-arrow-right"></i>${esc(short)}</button>`;}
-    html+='</div></div>';return html;
-}
-
-function buildNoMatchResponse(userText,allScored,alternatives,intent){
-    let response='';const closest=alternatives.filter(a=>a.score>0.8);const partials=allScored.filter(s=>s.score>0.5);
-    if(closest.length>0){response+=`<p>I don't have an exact match for that, but here are some close results that might help:</p>`;response+=buildSuggestionHTML(closest.slice(0,3).map(a=>a.entry),'Did you mean one of these?','blue');for(const alt of closest.slice(0,1)){const brief=getBriefAnswer(alt.entry.answer);if(brief)response+=`<p style="margin-top:8px;font-size:13px;color:#7D8590;"><strong style="color:#58A6FF;">Quick preview:</strong> ${brief}</p>`;}}
-    else if(partials.length>0){response+=`<p>I couldn't find a direct answer, but I noticed some related topics in our knowledge base:</p>`;response+=buildSuggestionHTML(partials.slice(0,4).map(p=>p.entry),'You might find these helpful','blue');}
-    else{response+=`<p>I don't have specific information on that topic in our knowledge base just yet.</p>`;}
-    response+=buildIntentGuidance(intent,userText);
-    if(allScored.length>0&&closest.length===0){const seenCats=new Set();const diverse=allScored.filter(s=>{const c=(s.entry.category||'').toLowerCase();if(seenCats.has(c))return false;seenCats.add(c);return true;}).slice(0,3).map(s=>s.entry);if(diverse.length>0)response+=buildSuggestionHTML(diverse,'Browse popular topics');}
-    response+=`<p style="margin-top:10px;font-size:12px;color:#7D8590;">If none of these match, I can connect you with a supervisor for further assistance.</p>`;return response;
-}
-
-function getBriefAnswer(raw){if(!raw)return'';const clean=raw.replace(/<[^>]*>/g,'').replace(/\n+/g,' ').trim();return clean.length<=120?clean:clean.substring(0,117)+'...';}
-
-function buildIntentGuidance(intent){
-    const g={greeting:'',pricing:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> For accurate pricing, check the product page or request a custom quote through the order system.</p>',shipping:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Shipping options and costs are calculated at checkout based on destination, weight, and carrier.</p>',file_prep:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Always use our file preparation guidelines and templates to avoid delays.</p>',material:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Paper samples may be available upon request — ask a supervisor to order sample kits.</p>',color:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Screen colors (RGB) look different in print (CMYK). A hard proof is recommended for critical color matches.</p>',sizing:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Custom sizes are available for most products. Size affects pricing and may impact turnaround.</p>',turnaround:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Rush production is available at additional cost. Standard turnaround starts from file approval.</p>',quality:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Quality issues should be documented with photos and reported through the incident system.</p>',complaint:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Use the "Report Incident" button to log complaints formally for tracking and resolution.</p>',discount:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Current promotions and discount codes are typically displayed on the product page during checkout.</p>',template:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Templates are available for download in multiple formats (AI, PSD, PDF, INDD).</p>',proof:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Proofs are typically generated within a few hours. Digital proofs are free; hard proofs may incur extra cost.</p>',product_bc:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Standard business card size is 3.5" x 2" with various paper and finish options.</p>',product_flyer:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Standard flyer sizes: 8.5"x11", 8.5"x5.5", and 5.5"x8.5".</p>',product_brochure:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Brochures available in bi-fold, tri-fold, and custom folding with multiple paper stocks.</p>',product_banner:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Banners printed on vinyl, mesh, or fabric. Grommets and hemming available.</p>',product_sticker:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Stickers can be die-cut to any shape. Available on paper, vinyl, or clear material.</p>',product_postcard:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> USPS mailing sizes: 4"x6", 5"x7", 5.5"x8.5", and 6"x11".</p>',product_poster:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Posters printed in large format with high-resolution output on various stocks.</p>',product_stationery:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Stationery sets include letterhead and envelopes. Matching business cards can be added.</p>',product_packaging:'<p style="margin-top:8px;font-size:12px;color:#7D8590;"><i class="fa-solid fa-circle-info" style="color:#58A6FF;"></i> Custom packaging includes boxes, sleeves, and labels with various material options.</p>'};
-    return g[intent]||'';
-}
-
-function handleSuggestionClick(text){const input=document.getElementById('chat-input');if(!input)return;input.value=text;sendMessage();}
 
 // ==============================================
-// 7. SESSIONS & REAL-TIME
+// 7. CHAT UI
 // ==============================================
-async function createNewSession(){
-    S.renderedMsgIds.clear();cleanupMsgChannel();document.getElementById('messages').innerHTML='';
-    try{const{data,error}=await db.from('sessions').insert({user_id:S.profile.id,user_name:S.profile.name,user_role:S.profile.role}).select('id').single();if(error)throw error;S.currentSessionId=data.id;subscribeToMessages(data.id);}
-    catch(e){console.error('Session error:',e);showToast('Could not start session: '+e.message,'error');S.currentSessionId=null;}
-    renderMsg({role:'bot',message:`Hi there! I'm your AVX Print Assistant. I can help you with:<br><br><div class="sugg-section" style="border:none;margin-top:4px;padding-top:0;"><div class="sugg-chips"><button class="sugg-chip" onclick="handleSuggestionClick('What file format should I use?')"><i class="fa-solid fa-file"></i>File Preparation</button><button class="sugg-chip" onclick="handleSuggestionClick('What color mode is required?')"><i class="fa-solid fa-palette"></i>Color Specs</button><button class="sugg-chip" onclick="handleSuggestionClick('What paper stocks are available?')"><i class="fa-solid fa-layer-group"></i>Paper & Materials</button><button class="sugg-chip" onclick="handleSuggestionClick('What are the shipping options?')"><i class="fa-solid fa-truck"></i>Shipping</button><button class="sugg-chip" onclick="handleSuggestionClick('What is the turnaround time?')"><i class="fa-solid fa-clock"></i>Turnaround</button><button class="sugg-chip" onclick="handleSuggestionClick('Tell me about business card specs')"><i class="fa-solid fa-id-card"></i>Business Cards</button><button class="sugg-chip blue" onclick="handleSuggestionClick('What coating and lamination options are there?')"><i class="fa-solid fa-droplet"></i>Coating</button><button class="sugg-chip green" onclick="handleSuggestionClick('How do I prepare a file for print?')"><i class="fa-solid fa-wand-magic-sparkles"></i>File Prep Guide</button></div></div><br>Just type your question or click a topic above!`,time:now()});
+function setChannel(ch){
+    S.channel=ch;
+    document.querySelectorAll('.ch-btn').forEach(b=>{
+        const isActive=b.dataset.ch===ch;
+        b.classList.toggle('bg-avx-accent/15',isActive);
+        b.classList.toggle('border-avx-accent',isActive);
+        b.classList.toggle('text-avx-accent',isActive);
+    });
 }
 
-async function saveSession(){
-    if(!S.currentSessionId)return showToast('No active session','warning');
-    if(S.renderedMsgIds.size<=0)return showToast('No conversation to save','warning');
-    try{const{error}=await db.rpc('save_session',{p_session_id:S.currentSessionId,p_notes:null});if(error)throw error;const u={};const on=document.getElementById('ct-order').value.trim(),ch=S.channel,ps=document.getElementById('ct-site').value;if(on)u.order_number=on;if(ch)u.channel=ch;if(ps)u.product_site=ps;if(Object.keys(u).length>0)await db.from('sessions').update(u).eq('id',S.currentSessionId);try{await db.rpc('log_activity',{p_action:'session_saved',p_details:{session_id:S.currentSessionId}});}catch(e){}showToast('Conversation saved successfully','success');document.getElementById('ct-order').value='';await createNewSession();}catch(e){showToast('Save failed: '+e.message,'error');}
-}
-function clearChat(){if(S.renderedMsgIds.size<=0)return;showConfirm('Discard conversation?','Unsaved messages will be lost.',async()=>{await createNewSession();showToast('New session started','info');});}
-function subscribeToMessages(sid){cleanupMsgChannel();msgChannel=db.channel(`msg-${sid}`).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`session_id=eq.${sid}`},p=>{const m=p.new;if(!S.renderedMsgIds.has(m.id)){S.renderedMsgIds.add(m.id);renderMsg({role:m.sender_role,message:m.content,time:m.created_at,id:m.id});}}).subscribe();}
-function cleanupMsgChannel(){if(msgChannel){db.removeChannel(msgChannel);msgChannel=null;}}
-function subscribeConvMessages(sid){cleanupConvChannel();S.convRenderedIds.clear();convChannel=db.channel(`conv-${sid}`).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`session_id=eq.${sid}`},p=>{const m=p.new;if(!S.convRenderedIds.has(m.id)){S.convRenderedIds.add(m.id);appendConvMsg(m);}}).subscribe();document.getElementById('conv-live').classList.remove('hidden');}
-function cleanupConvChannel(){if(convChannel){db.removeChannel(convChannel);convChannel=null;}const l=document.getElementById('conv-live');if(l)l.classList.add('hidden');}
-function cleanupRealtime(){cleanupMsgChannel();cleanupConvChannel();}
-
-// ==============================================
-// 8. CHAT UI
-// ==============================================
-function renderMsg(msg){
-    const c=document.getElementById('messages'),d=document.createElement('div');d.className='msg-enter flex '+(msg.role==='user'?'justify-end':'justify-start');const t=fmtT(msg.time);
-    if(msg.role==='user')d.innerHTML=`<div class="max-w-[75%] md:max-w-[60%]"><div class="bg-avx-accent/15 border border-avx-accent/20 rounded-2xl rounded-br-md px-4 py-2.5"><p class="text-sm text-avx-text leading-relaxed">${esc(msg.message)}</p></div><p class="text-[10px] text-avx-muted/50 text-right mt-1 mr-1">${t}</p></div>`;
-    else d.innerHTML=`<div class="max-w-[85%] md:max-w-[75%]"><div class="flex items-start gap-2.5"><div class="w-7 h-7 rounded-lg bg-avx-accent/10 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-solid fa-print text-avx-accent text-[10px]"></i></div><div class="bg-avx-card border border-avx-border rounded-2xl rounded-bl-md px-4 py-2.5"><div class="text-sm text-avx-text leading-relaxed">${msg.message}</div></div></div><p class="text-[10px] text-avx-muted/50 mt-1 ml-9">${t}</p></div>`;
-    c.appendChild(d);c.scrollTop=c.scrollHeight;
-}
-function showTyping(){const c=document.getElementById('messages'),d=document.createElement('div');d.id='typing-ind';d.className='msg-enter flex justify-start';d.innerHTML=`<div class="flex items-start gap-2.5"><div class="w-7 h-7 rounded-lg bg-avx-accent/10 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-solid fa-print text-avx-accent text-[10px]"></i></div><div class="bg-avx-card border border-avx-border rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-1.5"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div></div>`;c.appendChild(d);c.scrollTop=c.scrollHeight;}
-function hideTyping(){const e=document.getElementById('typing-ind');if(e)e.remove();}
 function handleChatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
 
+function renderUserMsg(text){
+    const container=document.getElementById('messages');
+    const div=document.createElement('div');
+    div.className='msg-enter flex justify-end';
+    div.innerHTML=`<div class="max-w-[75%] md:max-w-[60%]"><div class="bg-avx-accent/15 border border-avx-accent/25 rounded-2xl rounded-tr-md px-4 py-2.5"><p class="text-sm text-avx-text leading-relaxed">${esc(text).replace(/\n/g,'<br>')}</p></div><p class="text-[10px] text-avx-muted/50 text-right mt-1 mr-1">${fmtT(now())}</p></div>`;
+    container.appendChild(div);container.scrollTop=container.scrollHeight;
+}
+
+function renderBotMsg(html,suggestions=[],altQuestion=null,altAnswer=null){
+    const container=document.getElementById('messages');
+    const div=document.createElement('div');
+    div.className='msg-enter flex justify-start';
+    let suggHtml='';
+    if(suggestions&&suggestions.length>0){
+        const chips=suggestions.map(s=>{
+            const cc=['blue','green',''][Math.floor(Math.random()*3)];
+            const ic=['fa-lightbulb','fa-arrow-right','fa-circle-question'][Math.floor(Math.random()*3)];
+            return`<span class="sugg-chip ${cc}" onclick="askSuggestion(this)"><i class="fa-solid ${ic}"></i>${esc(s)}</span>`;
+        }).join('');
+        suggHtml=`<div class="sugg-section"><p class="sugg-label"><i class="fa-solid fa-sparkles"></i> Related questions</p><div class="sugg-chips">${chips}</div></div>`;
+    }
+    let altHtml='';
+    if(altQuestion&&altAnswer){
+        const ap=Paraphraser._html2txt(altAnswer);
+        altHtml=`<div class="alt-section"><p><i class="fa-solid fa-layer-group mr-1"></i> Also related: ${esc(altQuestion)}</p><p class="text-xs text-avx-muted">${esc(ap.substring(0,120))}${ap.length>120?'...':''}</p></div>`;
+    }
+    div.innerHTML=`<div class="max-w-[80%] md:max-w-[65%]"><div class="flex items-start gap-2.5"><div class="w-7 h-7 rounded-lg bg-avx-accent/10 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-solid fa-print text-avx-accent text-[10px]"></i></div><div class="flex-1 bg-avx-surface border border-avx-border rounded-2xl rounded-tl-md px-4 py-3"><div class="resp-body text-sm text-avx-text leading-relaxed">${html}</div>${altHtml}${suggHtml}</div></div><p class="text-[10px] text-avx-muted/50 mt-1 ml-9">${fmtT(now())}</p></div>`;
+    container.appendChild(div);container.scrollTop=container.scrollHeight;
+}
+
+function renderTyping(){
+    const container=document.getElementById('messages');
+    const div=document.createElement('div');div.id='typing-indicator';div.className='msg-enter flex justify-start';
+    div.innerHTML=`<div class="flex items-start gap-2.5"><div class="w-7 h-7 rounded-lg bg-avx-accent/10 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-solid fa-print text-avx-accent text-[10px]"></i></div><div class="bg-avx-surface border border-avx-border rounded-2xl rounded-tl-md px-4 py-3 flex items-center gap-1.5"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div></div>`;
+    container.appendChild(div);container.scrollTop=container.scrollHeight;
+}
+function removeTyping(){const el=document.getElementById('typing-indicator');if(el)el.remove();}
+function askSuggestion(chipEl){const text=chipEl.textContent.trim();document.getElementById('chat-input').value=text;sendMessage();}
+
 async function sendMessage(){
-    const input=document.getElementById('chat-input'),text=input.value.trim();
-    if(!text||!S.currentSessionId)return;input.value='';input.style.height='auto';
-    try{const{data,error}=await db.from('messages').insert({session_id:S.currentSessionId,user_id:S.profile.id,sender_role:'user',content:text}).select('id').single();if(error)throw error;S.renderedMsgIds.add(data.id);renderMsg({role:'user',message:text,time:now(),id:data.id});}catch(e){showToast('Failed to send: '+e.message,'error');return;}
-    const u={};const on=document.getElementById('ct-order').value.trim(),ch=S.channel,ps=document.getElementById('ct-site').value;if(on)u.order_number=on;if(ch)u.channel=ch;if(ps)u.product_site=ps;if(Object.keys(u).length>0)await db.from('sessions').update(u).eq('id',S.currentSessionId);
-    showTyping();
-    try{const match=await queryKBSmart(text);const responseHTML=buildSmartResponse(match,text);const{data:botData,error:botErr}=await db.from('messages').insert({session_id:S.currentSessionId,user_id:S.profile.id,sender_role:'bot',content:responseHTML}).select('id').single();if(!botErr&&botData)S.renderedMsgIds.add(botData.id);renderMsg({role:'bot',message:responseHTML,time:now()});}catch(e){console.error('Smart response error:',e);renderMsg({role:'bot',message:"I'm having trouble processing that right now. Please try again or I can connect you with a supervisor.",time:now()});}
-    hideTyping();
-}
-function setChannel(ch){S.channel=ch;document.querySelectorAll('.ch-btn').forEach(b=>{b.classList.toggle('bg-avx-accent/15',b.dataset.ch===ch);b.classList.toggle('border-avx-accent',b.dataset.ch===ch);b.classList.toggle('text-avx-accent',b.dataset.ch===ch);});}
-
-// ==============================================
-// 9. SUPERVISOR VIEWS — Schema-safe versions
-// ==============================================
-async function switchSupView(view){
-    S.supView=view;document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b.dataset.view===view);});
-    const c=document.getElementById('sup-content');
-    switch(view){case'home':await renderSupHome(c);break;case'tracker':await renderStaffTracker(c);break;case'jobs':await renderJobTracker(c);break;case'incidents':await renderIncidents(c);break;case'sites':await renderSites(c);break;case'knowledge':await renderKnowledge(c);break;}
-}
-
-async function loadActiveCount(){
-    try{
-        // No date filter — just count active sessions regardless of column name
-        const{count,error}=await db.from('sessions').select('*',{count:'exact',head:true}).eq('status','active');
-        if(error)throw error;
-        document.getElementById('sup-active-count').textContent=(count||0)+' active sessions';
-    }catch(e){console.error('Active count error:',e);document.getElementById('sup-active-count').textContent='—';}
-}
-
-async function renderSupHome(c){
-    c.innerHTML='<div class="flex items-center justify-center py-20 text-avx-muted"><i class="fa-solid fa-spinner fa-spin mr-3"></i>Loading...</div>';
-    try{
-        const{data:sessions,error}=await db.from('sessions').select('*').limit(50);
-        if(error)throw error;
-        if(!sessions||!sessions.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-inbox text-3xl mb-3 block opacity-30"></i><p>No sessions yet. Click Refresh to check for new data.</p></div>';return;}
-        // Sort client-side using dynamic date detection
-        const sorted=sortByDate(sessions);
-        c.innerHTML=`<div class="mb-4 flex items-center justify-between"><h3 class="font-display font-semibold text-avx-text">Recent Sessions</h3><span class="text-xs text-avx-muted">${sorted.length} shown</span></div><div class="space-y-2">${sorted.map(s=>`<div class="bg-avx-surface border border-avx-border rounded-xl p-4 hover-card cursor-pointer" onclick="openConvModal('${s.id}','${esc(s.user_name||'')}','${esc(s.user_role||'')}','${getRowDate(s)}')"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><span class="text-sm font-medium text-avx-text">${esc(s.user_name||'Unknown')}</span><span class="ch-badge bg-avx-accent/10 text-avx-accent">${esc(s.user_role||'')}</span>${s.channel?`<span class="ch-badge bg-avx-info/10 text-avx-info">${esc(s.channel)}</span>`:''}</div><span class="text-xs text-avx-muted">${getRowDate(s)}</span></div>${s.order_number?`<p class="text-xs text-avx-muted mb-1"><i class="fa-solid fa-hashtag mr-1"></i>${esc(s.order_number)}</p>`:''}${s.product_site?`<p class="text-xs text-avx-muted"><i class="fa-solid fa-globe mr-1"></i>${esc(s.product_site)}</p>`:''}</div>`).join('')}</div>`;
-    }catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><i class="fa-solid fa-circle-xmark text-3xl mb-3 block"></i><p>Error loading sessions: ${esc(e.message)}</p></div>`;}
-}
-
-async function renderStaffTracker(c){
-    c.innerHTML='<div class="flex items-center justify-center py-20 text-avx-muted"><i class="fa-solid fa-spinner fa-spin mr-3"></i>Loading...</div>';
-    try{
-        // Try filtering by role first, fallback to all profiles
-        let{data:staff,error}=await db.from('profiles').select('*').neq('role','supervisor');
-        if(error||!staff||!staff.length){
-            // Fallback: try loading all profiles if the 'role' column filter fails
-            const fallback=await db.from('profiles').select('*');
-            if(fallback.error)throw fallback.error;
-            staff=fallback.data;
+    const input=document.getElementById('chat-input');
+    const text=input.value.trim();
+    if(!text)return;
+    input.value='';input.style.height='auto';
+    renderUserMsg(text);
+    renderTyping();
+    const delay=400+Math.random()*600;
+    setTimeout(async()=>{
+        removeTyping();
+        try{
+            const kbEntries=await loadKB();
+            const results=searchKB(text,kbEntries);
+            if(results.length>0){
+                const best=results[0];
+                // === PARAPHRASED RESPONSE — never verbatim ===
+                const paraphrasedHtml=Paraphraser.paraphrase(best.answer,best);
+                const suggestions=results.slice(1,4).map(r=>r.question).filter(Boolean);
+                const alt=results.length>1?{q:results[1].question,a:results[1].answer}:null;
+                renderBotMsg(paraphrasedHtml,suggestions,alt?.q,alt?.a);
+            }else{
+                // === VARIED FALLBACK — never same wording ===
+                renderBotMsg(Paraphraser.noMatch());
+            }
+        }catch(err){
+            console.error('Chat error:',err);
+            renderBotMsg("Something went wrong on my end. Could you try again in a moment?");
         }
-        if(!staff||!staff.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-users text-3xl mb-3 block opacity-30"></i><p>No staff profiles found.</p></div>';return;}
-        c.innerHTML=`<h3 class="font-display font-semibold text-avx-text mb-4">Staff Status</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">${staff.map(s=>{
-            // Detect login/logout columns dynamically
-            const loginCol=Object.keys(s).find(k=>k.includes('login')&&typeof s[k]==='string');
-            const logoutCol=Object.keys(s).find(k=>k.includes('logout')&&typeof s[k]==='string');
-            const isOnline=loginCol&&s[loginCol]&&(!logoutCol||!s[logoutCol]);
-            const lastTime=logoutCol&&s[logoutCol]?s[logoutCol]:(loginCol?s[loginCol]:null);
-            return`<div class="bg-avx-surface border border-avx-border rounded-xl p-4 hover-card"><div class="flex items-center gap-3 mb-2"><div class="w-9 h-9 rounded-full bg-avx-accent/10 flex items-center justify-center text-avx-accent font-semibold text-sm">${(s.name||'?').charAt(0).toUpperCase()}</div><div><p class="text-sm font-medium text-avx-text">${esc(s.name||'Unknown')}</p><p class="text-xs text-avx-muted">${esc(s.role||'')}${s.designation?' — '+esc(s.designation):''}</p></div></div><div class="flex items-center gap-2 text-xs text-avx-muted">${isOnline?'<span class="status-dot bg-avx-success"></span> Online':'<span class="status-dot" style="background:#7D8590"></span> Offline'}${lastTime?`<span>Last: ${fmtT(lastTime)}</span>`:''}</div></div>`}).join('')}</div>`;
-    }catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><p>Error: ${esc(e.message)}</p></div>`;}
+    },delay);
 }
 
-async function renderJobTracker(c){
-    c.innerHTML='<div class="flex items-center justify-center py-20 text-avx-muted"><i class="fa-solid fa-spinner fa-spin mr-3"></i>Loading...</div>';
-    try{
-        // Find the order number column dynamically
-        const{data:sample}=await db.from('sessions').select('*').limit(1);
-        if(!sample||!sample.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-hashtag text-3xl mb-3 block opacity-30"></i><p>No data found.</p></div>';return;}
-        const orderCol=Object.keys(sample[0]).find(k=>k.includes('order'));
-        if(!orderCol){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-hashtag text-3xl mb-3 block opacity-30"></i><p>No order column found in sessions table.</p></div>';return;}
+function clearChat(){
+    document.getElementById('messages').innerHTML='';
+    Paraphraser.reset();
+    S.currentSessionId=null;
+    S.renderedMsgIds.clear();
+    showToast('New session started','info');
+}
 
-        const{data:jobs,error}=await db.from('sessions').select('*').not(orderCol,'is',null).limit(100);
+function showWelcomeMessage(){
+    const container=document.getElementById('messages');
+    const div=document.createElement('div');div.className='msg-enter flex justify-start';
+    div.innerHTML=`<div class="max-w-[80%] md:max-w-[65%]"><div class="flex items-start gap-2.5"><div class="w-7 h-7 rounded-lg bg-avx-accent/10 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-solid fa-print text-avx-accent text-[10px]"></i></div><div class="flex-1 bg-avx-surface border border-avx-border rounded-2xl rounded-tl-md px-4 py-3"><div class="resp-body text-sm text-avx-text leading-relaxed"><p>Hey there! I'm your AVX Tool HUB assistant. Go ahead and ask me anything about our products, print specs, file requirements, or ordering processes.</p></div><div class="sugg-section" style="margin-top:12px"><p class="sugg-label"><i class="fa-solid fa-sparkles"></i> Try asking</p><div class="sugg-chips"><span class="sugg-chip blue" onclick="askSuggestion(this)"><i class="fa-solid fa-palette"></i>What color mode should I use?</span><span class="sugg-chip green" onclick="askSuggestion(this)"><i class="fa-solid fa-file"></i>What file formats are accepted?</span><span class="sugg-chip" onclick="askSuggestion(this)"><i class="fa-solid fa-ruler"></i>What are the bleed requirements?</span></div></div></div></div></div>`;
+    container.appendChild(div);
+}
+
+// ==============================================
+// 8. SESSION SAVE
+// ==============================================
+async function saveSession(){
+    const orderNum=document.getElementById('ct-order')?.value.trim()||'';
+    const siteId=document.getElementById('ct-site')?.value||'';
+    const designation=document.getElementById('ct-designation')?.value||'';
+    const msgContainer=document.getElementById('messages');
+    const msgEls=msgContainer.querySelectorAll('.resp-body');
+    if(!msgEls.length)return showToast('No conversation to save','warning');
+    const conversation=Array.from(msgContainer.children).map(el=>{
+        const isUser=el.classList.contains('justify-end');
+        const textEl=el.querySelector('.resp-body, .bg-avx-accent\\/15 p');
+        return{role:isUser?'user':'bot',text:textEl?.textContent?.trim()||''};
+    }).filter(m=>m.text);
+    try{
+        const{data,error}=await db.from('sessions').insert({user_id:S.authUser?.id,order_number:orderNum,site_id:siteId||null,designation:designation||null,channel:S.channel||'chat',conversation:conversation,status:'assisted'}).select('id').single();
         if(error)throw error;
-        if(!jobs||!jobs.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-hashtag text-3xl mb-3 block opacity-30"></i><p>No jobs tracked yet.</p></div>';return;}
-        const sorted=sortByDate(jobs);
-        c.innerHTML=`<h3 class="font-display font-semibold text-avx-text mb-4">Job Tracker</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="text-left text-xs text-avx-muted border-b border-avx-border"><th class="pb-2 pr-4">Order #</th><th class="pb-2 pr-4">Consultant</th><th class="pb-2 pr-4">Site</th><th class="pb-2 pr-4">Channel</th><th class="pb-2">Time</th></tr></thead><tbody>${sorted.map(j=>`<tr class="border-b border-avx-border/50 hover:bg-avx-surface/50"><td class="py-2.5 pr-4 font-mono text-avx-accent">${esc(j[orderCol]||'')}</td><td class="py-2.5 pr-4 text-avx-text">${esc(j.user_name||'')}</td><td class="py-2.5 pr-4 text-avx-muted">${esc(j.product_site||'—')}</td><td class="py-2.5 pr-4"><span class="ch-badge bg-avx-info/10 text-avx-info">${esc(j.channel||'')}</span></td><td class="py-2.5 text-avx-muted text-xs">${getRowDate(j)}</td></tr>`).join('')}</tbody></table></div>`;
-    }catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><p>Error: ${esc(e.message)}</p></div>`;}
-}
-
-async function renderIncidents(c){
-    c.innerHTML='<div class="flex items-center justify-center py-20 text-avx-muted"><i class="fa-solid fa-spinner fa-spin mr-3"></i>Loading...</div>';
-    try{
-        // Load incidents and profiles separately — no FK join needed
-        const[incRes,profiles]=await Promise.all([
-            db.from('incidents').select('*').limit(100),
-            loadProfileNames()
-        ]);
-        if(incRes.error)throw incRes.error;
-        const incidents=incRes.data;
-        if(!incidents||!incidents.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-triangle-exclamation text-3xl mb-3 block opacity-30"></i><p>No incidents reported.</p></div>';return;}
-        const sorted=sortByDate(incidents);
-        c.innerHTML=`<h3 class="font-display font-semibold text-avx-text mb-4">Incidents</h3><div class="space-y-2">${sorted.map(i=>{
-            const userName=profiles[i.user_id]||'Unknown';
-            return`<div class="bg-avx-surface border border-avx-border rounded-xl p-4 hover-card"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><span class="ch-badge bg-avx-error/10 text-avx-error">${esc(i.category||'')}</span>${statusBadge(i.status)}</div><span class="text-xs text-avx-muted">${getRowDate(i)}</span></div><p class="text-sm text-avx-text mb-1">${esc(i.description||'')}</p><p class="text-xs text-avx-muted">By: ${esc(userName)}</p>${i.status!=='resolved'?`<div class="mt-2 flex gap-2"><button onclick="updateIncidentStatus('${i.id}','resolved')" class="text-xs px-3 py-1 rounded-lg bg-avx-success/10 text-avx-success border border-avx-success/20 hover:bg-avx-success/20 transition-all">Resolve</button>${i.status==='open'?`<button onclick="updateIncidentStatus('${i.id}','in_progress')" class="text-xs px-3 py-1 rounded-lg bg-avx-accent/10 text-avx-accent border border-avx-accent/20 hover:bg-avx-accent/20 transition-all">In Progress</button>`:''}</div>`:''}</div>`}).join('')}</div>`;
-    }catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><p>Error: ${esc(e.message)}</p></div>`;}
-}
-
-async function updateIncidentStatus(id,status){try{await db.from('incidents').update({status}).eq('id',id);showToast('Incident updated','success');if(S.supView==='incidents')renderIncidents(document.getElementById('sup-content'));}catch(e){showToast('Failed: '+e.message,'error');}}
-
-async function renderSites(c){
-    c.innerHTML='<div class="flex items-center justify-center py-20 text-avx-muted"><i class="fa-solid fa-spinner fa-spin mr-3"></i>Loading...</div>';
-    try{const sites=await loadSites();if(!sites||!sites.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-globe text-3xl mb-3 block opacity-30"></i><p>No sites configured.</p></div>';return;}
-    c.innerHTML=`<div class="flex items-center justify-between mb-4"><h3 class="font-display font-semibold text-avx-text">Product Sites</h3><button onclick="openSiteModal()" class="text-xs px-3 py-1.5 rounded-lg bg-avx-accent/10 text-avx-accent border border-avx-accent/20 hover:bg-avx-accent/20 transition-all"><i class="fa-solid fa-plus mr-1"></i>Add Site</button></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">${sites.map(s=>`<div class="site-card bg-avx-surface border border-avx-border rounded-xl p-4"><div class="flex items-center justify-between mb-2"><h4 class="text-sm font-medium text-avx-text">${esc(s.name)}</h4><div class="flex gap-1"><button onclick="openSiteModal('${s.id}','${esc(s.name)}','${esc(s.url||'')}',${s.sort_order||0})" class="w-7 h-7 rounded-lg hover:bg-avx-card flex items-center justify-center text-avx-muted hover:text-avx-accent transition-all text-xs"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSite('${s.id}')" class="w-7 h-7 rounded-lg hover:bg-avx-error/10 flex items-center justify-center text-avx-muted hover:text-avx-error transition-all text-xs"><i class="fa-solid fa-trash"></i></button></div></div>${s.url?`<a href="${esc(s.url)}" target="_blank" class="text-xs text-avx-info hover:underline block mb-1 truncate">${esc(s.url)}</a>`:''}</div>`).join('')}</div>`;}
-    catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><p>Error: ${esc(e.message)}</p></div>`;}
+        S.currentSessionId=data?.id;
+        showToast('Session saved as Assisted!','success');
+    }catch(e){console.error('Save error:',e);showToast('Failed to save session','error');}
 }
 
 // ==============================================
-// 9a. KNOWLEDGE BASE VIEW — with category dropdown
-// ==============================================
-let currentKbCategoryFilter='';
-
-async function renderKnowledge(c){
-    c.innerHTML='<div class="flex items-center justify-center py-20 text-avx-muted"><i class="fa-solid fa-spinner fa-spin mr-3"></i>Loading...</div>';
-    try{
-        const entries=await loadKB();
-        if(!entries||!entries.length){c.innerHTML='<div class="text-center py-20 text-avx-muted"><i class="fa-solid fa-brain text-3xl mb-3 block opacity-30"></i><p>No knowledge base entries.</p></div>';return;}
-
-        // Build unique category list
-        const categories=[...new Set(entries.map(e=>e.category||'').filter(Boolean).map(c=>c.trim()).sort())];
-
-        // Apply filter
-        const filtered=currentKbCategoryFilter?entries.filter(e=>(e.category||'').trim().toLowerCase()===currentKbCategoryFilter.toLowerCase()):entries;
-
-        c.innerHTML=`
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-            <h3 class="font-display font-semibold text-avx-text">Knowledge Base <span class="text-avx-muted font-normal text-sm">(${filtered.length}${currentKbCategoryFilter?' of '+entries.length:''})</span></h3>
-            <div class="flex items-center gap-2 flex-wrap">
-                <div class="relative">
-                    <select id="kb-cat-filter" onchange="filterKbByCategory(this.value)" class="kb-filter-select pr-7">
-                        <option value="">All Categories</option>
-                        ${categories.map(cat=>`<option value="${esc(cat)}"${currentKbCategoryFilter.toLowerCase()===cat.toLowerCase()?' selected':''}>${esc(cat)} (${entries.filter(e=>(e.category||'').trim().toLowerCase()===cat.toLowerCase()).length})</option>`).join('')}
-                    </select>
-                    <i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-avx-muted text-[9px] pointer-events-none"></i>
-                </div>
-                <button onclick="openImportModal()" class="text-xs px-3 py-1.5 rounded-lg bg-avx-info/10 text-avx-info border border-avx-info/20 hover:bg-avx-info/20 transition-all"><i class="fa-solid fa-file-import mr-1"></i>Import</button>
-                <button onclick="openKbModal()" class="text-xs px-3 py-1.5 rounded-lg bg-avx-accent/10 text-avx-accent border border-avx-accent/20 hover:bg-avx-accent/20 transition-all"><i class="fa-solid fa-plus mr-1"></i>Add</button>
-            </div>
-        </div>
-        ${!filtered.length?'<div class="text-center py-16 text-avx-muted"><i class="fa-solid fa-filter text-2xl mb-3 block opacity-30"></i><p>No entries in this category.</p></div>':`
-        <div class="space-y-2">${filtered.map(e=>`<div class="bg-avx-surface border border-avx-border rounded-xl p-4 hover-card"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><span class="kb-cat-tag bg-avx-accent/10 text-avx-accent">${esc(e.category||'')}</span><span class="text-xs text-avx-muted">Priority: ${e.priority||0}</span></div><div class="flex gap-1"><button onclick="openKbModal('${e.id}','${esc(e.category||'')}','${esc((e.keywords||[]).join(','))}','${esc(e.question||'')}','${esc(e.answer||'').replace(/'/g,"\\'")}',${e.priority||0})" class="w-7 h-7 rounded-lg hover:bg-avx-card flex items-center justify-center text-avx-muted hover:text-avx-accent transition-all text-xs"><i class="fa-solid fa-pen"></i></button><button onclick="deleteKbEntry('${e.id}')" class="w-7 h-7 rounded-lg hover:bg-avx-error/10 flex items-center justify-center text-avx-muted hover:text-avx-error transition-all text-xs"><i class="fa-solid fa-trash"></i></button></div></div><p class="text-sm font-medium text-avx-text mb-1">${esc(e.question||'')}</p><p class="text-xs text-avx-muted line-clamp-2">${esc((e.answer||'').replace(/<[^>]*>/g,''))}</p><p class="text-xs text-avx-muted/50 mt-2">Keywords: ${esc((e.keywords||[]).join(', '))}</p></div>`).join('')}</div>`}`;
-    }catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><p>Error: ${esc(e.message)}</p></div>`;}
-}
-
-function filterKbByCategory(val){
-    currentKbCategoryFilter=val;
-    renderKnowledge(document.getElementById('sup-content'));
-}
-
-// ==============================================
-// 10. CONVERSATION MODAL
-// ==============================================
-async function openConvModal(sid,name,role,time){
-    document.getElementById('conv-modal').classList.remove('hidden');
-    document.getElementById('conv-meta').textContent=`${name} (${role}) — ${time}`;
-    document.getElementById('conv-messages').innerHTML='<div class="flex items-center justify-center py-10 text-avx-muted"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</div>';
-    document.getElementById('conv-notes').classList.add('hidden');
-    subscribeConvMessages(sid);
-    try{const{data:msgs,error}=await db.from('messages').select('*').eq('session_id',sid);if(error)throw error;
-    const{data:session}=await db.from('sessions').select('*').eq('id',sid).single();
-    if(session){const notesCol=Object.keys(session).find(k=>k.includes('note'));if(notesCol&&session[notesCol]){document.getElementById('conv-notes').classList.remove('hidden');document.getElementById('conv-notes-text').textContent=session[notesCol];}}
-    document.getElementById('conv-messages').innerHTML='';const sorted=sortByDate(msgs||[]);sorted.forEach(m=>{S.convRenderedIds.add(m.id);appendConvMsg(m);});}
-    catch(e){document.getElementById('conv-messages').innerHTML=`<p class="text-avx-error text-sm text-center py-10">Error: ${esc(e.message)}</p>`;}
-}
-function appendConvMsg(m){
-    const c=document.getElementById('conv-messages'),d=document.createElement('div');d.className='msg-enter flex '+(m.sender_role==='user'?'justify-end':'justify-start');
-    const t=m.created_at?fmtT(m.created_at):'';
-    if(m.sender_role==='user')d.innerHTML=`<div class="max-w-[75%]"><div class="bg-avx-accent/15 border border-avx-accent/20 rounded-2xl rounded-br-md px-4 py-2.5"><p class="text-sm text-avx-text">${esc(m.content)}</p></div><p class="text-[10px] text-avx-muted/50 text-right mt-1">${t}</p></div>`;
-    else d.innerHTML=`<div class="max-w-[85%]"><div class="flex items-start gap-2"><div class="w-6 h-6 rounded-md bg-avx-accent/10 flex items-center justify-center shrink-0"><i class="fa-solid fa-print text-avx-accent text-[9px]"></i></div><div class="bg-avx-card border border-avx-border rounded-2xl rounded-bl-md px-4 py-2.5"><div class="text-sm text-avx-text leading-relaxed">${m.content}</div></div></div><p class="text-[10px] text-avx-muted/50 mt-1 ml-8">${t}</p></div>`;
-    c.appendChild(d);c.scrollTop=c.scrollHeight;
-}
-function closeConvModal(){document.getElementById('conv-modal').classList.add('hidden');cleanupConvChannel();}
-
-// ==============================================
-// 11. INCIDENT MODAL
+// 9. INCIDENT REPORTING
 // ==============================================
 function openIncidentModal(){document.getElementById('inc-category').value='complaint';document.getElementById('inc-desc').value='';document.getElementById('incident-modal').classList.remove('hidden');}
 function closeIncidentModal(){document.getElementById('incident-modal').classList.add('hidden');}
-async function submitIncident(){const cat=document.getElementById('inc-category').value,desc=document.getElementById('inc-desc').value.trim();if(!desc)return showToast('Please describe the incident','warning');try{const{error}=await db.from('incidents').insert({user_id:S.profile.id,category:cat,description:desc});if(error)throw error;closeIncidentModal();showToast('Incident reported','success');}catch(e){showToast('Failed: '+e.message,'error');}}
-
-// ==============================================
-// 12. KB MODAL - with WYSIWYG Editor
-// ==============================================
-function openKbModal(id,cat,kw,q,a,p){
-    document.getElementById('kb-edit-id').value=id||'';
-    document.getElementById('kb-cat').value=cat||'';
-    document.getElementById('kb-keywords').value=kw||'';
-    document.getElementById('kb-question').value=q||'';
-    document.getElementById('kb-priority').value=p||5;
-    document.getElementById('kb-modal-title').textContent=id?'Edit Knowledge':'Add Knowledge';
-    document.getElementById('kb-modal').classList.remove('hidden');
-
-    // Initialize WYSIWYG editor after modal is shown
-    setTimeout(() => {
-        initKbEditor(a || '');
-    }, 100);
+async function submitIncident(){
+    const category=document.getElementById('inc-category').value;
+    const desc=document.getElementById('inc-desc').value.trim();
+    if(!desc)return showToast('Please describe the incident','warning');
+    try{
+        const{error}=await db.from('incidents').insert({user_id:S.authUser?.id,session_id:S.currentSessionId||null,order_number:document.getElementById('ct-order')?.value.trim()||'',category:category,description:desc,status:'open'});
+        if(error)throw error;
+        closeIncidentModal();showToast('Incident reported successfully','success');
+    }catch(e){console.error('Incident error:',e);showToast('Failed to report incident','error');}
 }
 
-function closeKbModal(){
-    document.getElementById('kb-modal').classList.add('hidden');
-    // Clean up editor
-    if (kbQuillEditor) {
-        kbQuillEditor.off('text-change');
-        kbQuillEditor = null;
+// ==============================================
+// 10. SITES
+// ==============================================
+async function loadSitesDropdown(){
+    try{
+        const{data,error}=await db.from('sites').select('*').order('sort_order',{ascending:true});
+        if(error)throw error;
+        sitesCache=data||[];sitesCacheTime=Date.now();
+        const select=document.getElementById('ct-site');
+        const qlSelect=document.getElementById('ql-site-filter');
+        if(select){const cv=select.value;select.innerHTML='<option value="">Select site...</option>';(data||[]).forEach(s=>{select.innerHTML+=`<option value="${s.id}">${esc(s.name)}</option>`;});if(cv)select.value=cv;}
+        if(qlSelect){const cv=qlSelect.value;qlSelect.innerHTML='<option value="">All Sites</option>';(data||[]).forEach(s=>{qlSelect.innerHTML+=`<option value="${s.id}">${esc(s.name)}</option>`;});if(cv)qlSelect.value=cv;}
+    }catch(e){console.error('Sites load error:',e);}
+}
+
+// ==============================================
+// 11. PROFILE LOAD + SCREEN ROUTING
+// ==============================================
+async function loadProfile(user){
+    try{
+        const{data:profile,error}=await db.from('profiles').select('*').eq('id',user.id).single();
+        if(error)throw error;
+        S.profile=profile;
+        await db.from('profiles').update({login_time:now(),logout_time:null}).eq('id',user.id);
+        S.profile.login_time=now();
+        try{await db.rpc('log_activity',{p_action:'login',p_details:{role:profile.role}});}catch(e){}
+        document.getElementById('auth-screen').classList.add('hidden');
+        if(profile.role==='supervisor'){
+            document.getElementById('sup-screen').classList.remove('hidden');
+            document.getElementById('sup-welcome').textContent='Welcome, '+(profile.name||'Supervisor');
+            startClock();loadSitesDropdown();loadActiveCount();switchSupView('home');
+        }else{
+            document.getElementById('ct-screen').classList.remove('hidden');
+            document.getElementById('ct-welcome').textContent='Welcome, '+(profile.name||'User');
+            document.getElementById('ct-role-label').textContent=cap(profile.role||'')+(profile.designation?' — '+profile.designation:'');
+            startClock();loadSitesDropdown();showWelcomeMessage();
+        }
+    }catch(e){console.error('Profile load error:',e);showToast('Failed to load profile','error');}
+}
+
+// ==============================================
+// 12. SUPERVISOR DASHBOARD
+// ==============================================
+async function loadActiveCount(){
+    try{const{count}=await db.from('sessions').select('*',{count:'exact',head:true}).eq('status','active');const el=document.getElementById('sup-active-count');if(el)el.textContent=count||0;}catch(e){}
+}
+function toggleSupSidebar(){document.getElementById('sup-sidebar').classList.toggle('open');}
+
+function switchSupView(view){
+    S.supView=view;
+    document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b.dataset.view===view);});
+    document.getElementById('sup-sidebar').classList.remove('open');
+    const content=document.getElementById('sup-content');
+    switch(view){
+        case 'home':renderSupHome(content);break;
+        case 'tracker':renderSupTracker(content);break;
+        case 'jobs':renderSupJobs(content);break;
+        case 'incidents':renderSupIncidents(content);break;
+        case 'sites':renderSupSites(content);break;
+        case 'knowledge':renderSupKnowledge(content);break;
+        default:renderSupHome(content);
     }
 }
 
-async function saveKbEntry(){
-    const id=document.getElementById('kb-edit-id').value;
-    const cat=document.getElementById('kb-cat').value.trim();
-    const kw=document.getElementById('kb-keywords').value.split(',').map(s=>s.trim()).filter(Boolean);
-    const q=document.getElementById('kb-question').value.trim();
-    // Get content from WYSIWYG editor
-    const a=getKbEditorContent();
-    const p=parseInt(document.getElementById('kb-priority').value)||5;
-
-    // Clean HTML - remove Quill's internal classes while preserving structure
-    let cleanAnswer = a
-        .replace(/class="ql-align-center"/g, 'style="text-align:center"')
-        .replace(/class="ql-align-right"/g, 'style="text-align:right"')
-        .replace(/class="ql-align-justify"/g, 'style="text-align:justify"')
-        .replace(/class="ql-align-[^"]*"/g, '')
-        .replace(/<p><br><\/p>/g, '')
-        .replace(/\s+class="ql-cursor"/g, '');
-
-    // Strip remaining Quill-specific inline styles that don't affect rendering
-    cleanAnswer = cleanAnswer.replace(/ style="[^"]*ql-[^"]*"/g, '');
-
-    if(!q)return showToast('Question is required','warning');
-    if(!cleanAnswer || cleanAnswer === '<p><br></p>' || cleanAnswer === '<p></p>')return showToast('Answer is required','warning');
-
+async function renderSupHome(container){
+    container.innerHTML='<div class="flex items-center justify-center py-20"><i class="fa-solid fa-spinner fa-spin text-avx-accent text-2xl"></i></div>';
     try{
-        if(id){
-            const{error}=await db.from('knowledge_base').update({category:cat,keywords:kw,question:q,answer:cleanAnswer,priority:p}).eq('id',id);
-            if(error)throw error;
-        }else{
-            const{error}=await db.from('knowledge_base').insert({category:cat,keywords:kw,question:q,answer:cleanAnswer,priority:p});
-            if(error)throw error;
-        }
-        kbCache=null;kbCacheTime=0;
-        closeKbModal();
-        showToast('Knowledge entry saved','success');
-        if(S.supView==='knowledge')renderKnowledge(document.getElementById('sup-content'));
-    }catch(e){showToast('Failed: '+e.message,'error');}
+        await loadProfileNames();
+        const[sessRes,incRes]=await Promise.all([
+            db.from('sessions').select('*').order('created_at',{ascending:false}).limit(20),
+            db.from('incidents').select('*').eq('status','open').order('created_at',{ascending:false}).limit(10)
+        ]);
+        const sessions=sortByDate(sessRes.data||[]);
+        const incidents=incRes.data||[];
+        container.innerHTML=`<div class="page-enter space-y-6"><div class="flex items-center justify-between"><h2 class="text-lg font-display font-semibold text-avx-text">Dashboard Overview</h2><span class="text-xs text-avx-muted">${sessions.length} recent sessions</span></div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="hover-card bg-avx-surface border border-avx-border rounded-xl p-4"><p class="text-xs text-avx-muted mb-1">Active Sessions</p><p class="text-2xl font-display font-bold text-avx-accent" id="sup-active-count">${sessions.filter(s=>s.status==='active').length}</p></div>
+            <div class="hover-card bg-avx-surface border border-avx-border rounded-xl p-4"><p class="text-xs text-avx-muted mb-1">Open Incidents</p><p class="text-2xl font-display font-bold text-avx-error">${incidents.length}</p></div>
+            <div class="hover-card bg-avx-surface border border-avx-border rounded-xl p-4"><p class="text-xs text-avx-muted mb-1">Assisted Today</p><p class="text-2xl font-display font-bold text-avx-success">${sessions.filter(s=>s.status==='assisted').length}</p></div>
+        </div>
+        ${incidents.length>0?`<div><h3 class="text-sm font-display font-semibold text-avx-text mb-3"><i class="fa-solid fa-triangle-exclamation text-avx-error mr-2"></i>Open Incidents</h3><div class="space-y-2">${incidents.slice(0,5).map(inc=>`<div class="bg-avx-surface border border-avx-border rounded-lg p-3 flex items-start justify-between gap-3"><div class="flex-1 min-w-0"><div class="flex items-center gap-2 mb-1"><span class="ch-badge bg-avx-error/15 text-avx-error">${esc(inc.category)}</span>${inc.order_number?`<span class="text-xs text-avx-muted">#${esc(inc.order_number)}</span>`:''}</div><p class="text-sm text-avx-text truncate">${esc(inc.description)}</p><p class="text-xs text-avx-muted mt-1">${getProfileName(inc.user_id)} — ${getRowDate(inc)}</p></div>${statusBadge(inc.status)}</div>`).join('')}</div></div>`:''}
+        <div><h3 class="text-sm font-display font-semibold text-avx-text mb-3"><i class="fa-solid fa-clock-rotate-left text-avx-info mr-2"></i>Recent Sessions</h3><div class="space-y-2">${sessions.map(s=>`<div class="bg-avx-surface border border-avx-border rounded-lg p-3 flex items-center justify-between gap-3 hover-card cursor-pointer" onclick="openConvModal('${s.id}','${s.user_id}')"><div class="flex-1 min-w-0"><div class="flex items-center gap-2 mb-1"><span class="ch-badge ${s.status==='assisted'?'bg-avx-success/15 text-avx-success':'bg-avx-accent/15 text-avx-accent'}">${esc(s.status||'active')}</span>${s.channel?`<span class="ch-badge bg-avx-card text-avx-muted">${esc(s.channel)}</span>`:''}${s.order_number?`<span class="text-xs text-avx-muted font-medium">#${esc(s.order_number)}</span>`:''}</div><p class="text-xs text-avx-muted">${getProfileName(s.user_id)} ${s.designation?'— '+esc(s.designation):''}</p></div><div class="text-right shrink-0"><p class="text-xs text-avx-muted">${getRowDate(s)}</p></div></div>`).join('')}</div></div></div>`;
+    }catch(e){console.error('Home render error:',e);container.innerHTML='<p class="text-avx-error text-sm">Failed to load dashboard data.</p>';}
 }
 
-async function deleteKbEntry(id){showConfirm('Delete entry?','This cannot be undone.',async()=>{try{await db.from('knowledge_base').update({active:false}).eq('id',id);kbCache=null;kbCacheTime=0;showToast('Entry deleted','success');if(S.supView==='knowledge')renderKnowledge(document.getElementById('sup-content'));}catch(e){showToast('Failed: '+e.message,'error');}});}
-async function importCSV(){const raw=document.getElementById('import-csv').value.trim();if(!raw)return showToast('Paste CSV content first','warning');const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);if(lines.length<2)return showToast('CSV needs a header row + data','warning');const header=lines[0].split(',').map(s=>s.trim().replace(/^"|"$/g,''));const rows=lines.slice(1).map(l=>{const vals=[];let cur='',inQ=false;for(const ch of l){if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}else{cur+=ch;}}vals.push(cur.trim());return vals;});const entries=rows.map(r=>({category:r[header.indexOf('category')]||'',keywords:(r[header.indexOf('keywords')]||'').split(',').map(s=>s.trim()).filter(Boolean),question:r[header.indexOf('question')]||'',answer:r[header.indexOf('answer')]||'',priority:parseInt(r[header.indexOf('priority')])||5}));try{const{error}=await db.from('knowledge_base').insert(entries);if(error)throw error;kbCache=null;kbCacheTime=0;document.getElementById('import-modal').classList.add('hidden');showToast(`${entries.length} entries imported`,'success');if(S.supView==='knowledge')renderKnowledge(document.getElementById('sup-content'));}catch(e){showToast('Import failed: '+e.message,'error');}}
-function openImportModal(){document.getElementById('import-csv').value='';document.getElementById('import-modal').classList.remove('hidden');}
+async function renderSupTracker(container){
+    container.innerHTML='<div class="flex items-center justify-center py-20"><i class="fa-solid fa-spinner fa-spin text-avx-accent text-2xl"></i></div>';
+    try{
+        await loadProfileNames();
+        const{data:profiles}=await db.from('profiles').select('*').neq('role','supervisor').order('login_time',{ascending:false});
+        const now_time=new Date();
+        container.innerHTML=`<div class="page-enter space-y-4"><h2 class="text-lg font-display font-semibold text-avx-text">Staff Activity Tracker</h2><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">${(profiles||[]).map(p=>{const isOnline=p.login_time&&!p.logout_time&&(now_time-new Date(p.login_time))<8*60*60*1000;const lastLogin=p.login_time?fmtDT(p.login_time):'Never';return`<div class="hover-card bg-avx-surface border border-avx-border rounded-xl p-4"><div class="flex items-center gap-3 mb-3"><div class="w-9 h-9 rounded-full bg-avx-accent/10 flex items-center justify-center text-avx-accent font-display font-bold text-sm">${(p.name||'U').charAt(0).toUpperCase()}</div><div class="flex-1 min-w-0"><p class="text-sm font-medium text-avx-text truncate">${esc(p.name||'Unknown')}</p><p class="text-xs text-avx-muted">${cap(p.role||'')}${p.designation?' — '+esc(p.designation):''}</p></div><div class="status-dot ${isOnline?'bg-avx-success pulse-ring':'bg-avx-muted/40'}"></div></div><div class="flex items-center justify-between text-xs text-avx-muted"><span>${isOnline?'Online now':'Offline'}</span><span>Last login: ${lastLogin}</span></div></div>`;}).join('')}</div></div>`;
+    }catch(e){container.innerHTML='<p class="text-avx-error text-sm">Failed to load staff data.</p>';}
+}
 
-// ==============================================
-// 13. SITE MODAL
-// ==============================================
-function openSiteModal(id,name,url,sort){document.getElementById('site-edit-id').value=id||'';document.getElementById('site-name').value=name||'';document.getElementById('site-url').value=url||'';document.getElementById('site-sort').value=sort||0;document.getElementById('site-modal-title').textContent=id?'Edit Site':'Add Site';document.getElementById('site-modal').classList.remove('hidden');}
+async function renderSupJobs(container){
+    container.innerHTML='<div class="flex items-center justify-center py-20"><i class="fa-solid fa-spinner fa-spin text-avx-accent text-2xl"></i></div>';
+    try{
+        const{data}=await db.from('sessions').select('*').not('order_number','is',null).order('created_at',{ascending:false}).limit(20);
+        const jobs=sortByDate(data||[]);
+        container.innerHTML=`<div class="page-enter space-y-4"><h2 class="text-lg font-display font-semibold text-avx-text">Job / Order Tracker</h2>${jobs.length===0?'<div class="bg-avx-surface border border-avx-border rounded-xl p-6 text-center"><i class="fa-solid fa-hashtag text-avx-muted/30 text-3xl mb-3"></i><p class="text-sm text-avx-muted">No jobs with order numbers found yet.</p></div>':`<div class="space-y-2">${jobs.map(s=>`<div class="bg-avx-surface border border-avx-border rounded-lg p-3 flex items-center justify-between gap-3 hover-card cursor-pointer" onclick="openConvModal('${s.id}','${s.user_id}')"><div><span class="text-sm font-mono font-semibold text-avx-accent">#${esc(s.order_number)}</span><span class="ch-badge ${s.status==='assisted'?'bg-avx-success/15 text-avx-success':'bg-avx-accent/15 text-avx-accent'} ml-2">${esc(s.status||'active')}</span></div><div class="text-right"><p class="text-xs text-avx-muted">${getProfileName(s.user_id)}</p><p class="text-xs text-avx-muted/50">${getRowDate(s)}</p></div></div>`).join('')}</div>`}</div>`;
+    }catch(e){container.innerHTML='<p class="text-avx-error text-sm">Failed to load jobs.</p>';}
+}
+
+async function renderSupIncidents(container){
+    container.innerHTML='<div class="flex items-center justify-center py-20"><i class="fa-solid fa-spinner fa-spin text-avx-accent text-2xl"></i></div>';
+    try{
+        await loadProfileNames();
+        const{data}=await db.from('incidents').select('*').order('created_at',{ascending:false});
+        const incidents=sortByDate(data||[]);
+        container.innerHTML=`<div class="page-enter space-y-4"><div class="flex items-center justify-between"><h2 class="text-lg font-display font-semibold text-avx-text">Incidents</h2><span class="text-xs text-avx-muted">${incidents.length} total</span></div>${incidents.length===0?'<p class="text-sm text-avx-muted py-10 text-center">No incidents reported yet.</p>':`<div class="space-y-2">${incidents.map(inc=>`<div class="bg-avx-surface border border-avx-border rounded-xl p-4 hover-card"><div class="flex items-start justify-between gap-3 mb-2"><div class="flex items-center gap-2"><span class="ch-badge bg-avx-error/15 text-avx-error">${esc(inc.category)}</span>${inc.order_number?`<span class="text-xs font-mono text-avx-muted">#${esc(inc.order_number)}</span>`:''}</div><div class="flex items-center gap-2">${statusBadge(inc.status)}${inc.status==='open'?`<button onclick="resolveIncident('${inc.id}')" class="text-xs text-avx-success hover:underline">Resolve</button>`:''}</div></div><p class="text-sm text-avx-text mb-2">${esc(inc.description)}</p><p class="text-xs text-avx-muted">${getProfileName(inc.user_id)} — ${getRowDate(inc)}</p></div>`).join('')}</div>`}</div>`;
+    }catch(e){container.innerHTML='<p class="text-avx-error text-sm">Failed to load incidents.</p>';}
+}
+async function resolveIncident(id){showConfirm('Resolve Incident','Mark this incident as resolved?',async()=>{try{await db.from('incidents').update({status:'resolved'}).eq('id',id);showToast('Incident resolved','success');switchSupView('incidents');}catch(e){showToast('Failed to resolve','error');}});}
+
+async function renderSupSites(container){
+    container.innerHTML='<div class="flex items-center justify-center py-20"><i class="fa-solid fa-spinner fa-spin text-avx-accent text-2xl"></i></div>';
+    try{
+        const{data}=await db.from('sites').select('*').order('sort_order',{ascending:true});
+        const sites=data||[];
+        container.innerHTML=`<div class="page-enter space-y-4"><div class="flex items-center justify-between"><h2 class="text-lg font-display font-semibold text-avx-text">Product Sites</h2><button onclick="openSiteModal()" class="px-4 py-2 bg-avx-accent hover:bg-avx-accent-h text-white font-semibold rounded-lg text-sm transition-all btn-glow"><i class="fa-solid fa-plus mr-2"></i>Add Site</button></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">${sites.map(s=>`<div class="site-card bg-avx-surface border border-avx-border rounded-xl p-4"><div class="flex items-start justify-between mb-2"><div><p class="text-sm font-medium text-avx-text">${esc(s.name)}</p>${s.url?`<a href="${esc(s.url)}" target="_blank" class="text-xs text-avx-info hover:underline">${esc(s.url)}</a>`:''}</div><div class="flex gap-1"><button onclick="editSite('${s.id}')" class="w-7 h-7 rounded-lg hover:bg-avx-card flex items-center justify-center text-avx-muted hover:text-avx-accent transition-all"><i class="fa-solid fa-pen text-[10px]"></i></button><button onclick="deleteSite('${s.id}')" class="w-7 h-7 rounded-lg hover:bg-avx-card flex items-center justify-center text-avx-muted hover:text-avx-error transition-all"><i class="fa-solid fa-trash text-[10px]"></i></button></div></div><p class="text-xs text-avx-muted">Sort: ${s.sort_order??0}</p></div>`).join('')}${sites.length===0?'<p class="text-sm text-avx-muted col-span-3 text-center py-10">No sites added yet.</p>':''}</div></div>`;
+    }catch(e){container.innerHTML='<p class="text-avx-error text-sm">Failed to load sites.</p>';}
+}
+
+function openSiteModal(site=null){document.getElementById('site-edit-id').value=site?.id||'';document.getElementById('site-name').value=site?.name||'';document.getElementById('site-url').value=site?.url||'';document.getElementById('site-sort').value=site?.sort_order??0;document.getElementById('site-modal-title').textContent=site?'Edit Product Site':'Add Product Site';document.getElementById('site-modal').classList.remove('hidden');}
 function closeSiteModal(){document.getElementById('site-modal').classList.add('hidden');}
-async function saveSite(){const id=document.getElementById('site-edit-id').value,name=document.getElementById('site-name').value.trim(),url=document.getElementById('site-url').value.trim(),sort=parseInt(document.getElementById('site-sort').value)||0;if(!name)return showToast('Site name is required','warning');try{if(id){const{error}=await db.from('product_sites').update({name,url,sort_order:sort}).eq('id',id);if(error)throw error;}else{const{error}=await db.from('product_sites').insert({name,url,sort_order:sort});if(error)throw error;}sitesCache=null;sitesCacheTime=0;closeSiteModal();showToast('Site saved','success');if(S.supView==='sites')renderSites(document.getElementById('sup-content'));}catch(e){showToast('Failed: '+e.message,'error');}}
-async function deleteSite(id){showConfirm('Delete site?','This will deactivate the site.',async()=>{try{await db.from('product_sites').update({active:false}).eq('id',id);sitesCache=null;sitesCacheTime=0;showToast('Site deleted','success');if(S.supView==='sites')renderSites(document.getElementById('sup-content'));}catch(e){showToast('Failed: '+e.message,'error');}});}
+function editSite(id){const site=(sitesCache||[]).find(s=>s.id===id);if(site)openSiteModal(site);}
+async function saveSite(){
+    const id=document.getElementById('site-edit-id').value;
+    const name=document.getElementById('site-name').value.trim();
+    const url=document.getElementById('site-url').value.trim();
+    const sort=parseInt(document.getElementById('site-sort').value)||0;
+    if(!name)return showToast('Site name is required','warning');
+    try{if(id){await db.from('sites').update({name,url,sort_order:sort}).eq('id',id);showToast('Site updated','success');}else{await db.from('sites').insert({name,url,sort_order:sort});showToast('Site added','success');}closeSiteModal();sitesCache=null;switchSupView('sites');loadSitesDropdown();}catch(e){showToast('Failed to save site','error');}
+}
+function deleteSite(id){showConfirm('Delete Site','Are you sure you want to delete this site?',async()=>{try{await db.from('sites').delete().eq('id',id);showToast('Site deleted','success');sitesCache=null;switchSupView('sites');loadSitesDropdown();}catch(e){showToast('Failed to delete','error');}});}
 
 // ==============================================
-// 14. QUICK LINKS
+// 13. KNOWLEDGE BASE MANAGEMENT
 // ==============================================
-async function toggleQuickLinks(){const p=document.getElementById('quick-links-panel');p.classList.toggle('hidden');if(!p.classList.contains('hidden')){const sites=await loadSites();const sel=document.getElementById('ql-site-filter');const cv=sel.value;sel.innerHTML='<option value="">All Sites</option>'+sites.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');if(cv)sel.value=cv;loadQuickLinks();}}
-async function loadQuickLinks(){const filter=document.getElementById('ql-site-filter').value;const sites=await loadSites();const filtered=filter?sites.filter(s=>s.name===filter):sites;const c=document.getElementById('ql-content');if(!filtered||!filtered.length){c.innerHTML='<p class="text-center text-avx-muted text-xs py-8">No sites found</p>';return;}c.innerHTML=filtered.map(s=>`<a href="${esc(s.url||'#')}" target="_blank" class="block bg-avx-card border border-avx-border rounded-xl p-3 site-card"><div class="flex items-center gap-2"><i class="fa-solid fa-arrow-up-right-from-square text-avx-accent text-xs"></i><span class="text-sm font-medium text-avx-text">${esc(s.name)}</span></div>${s.url?`<p class="text-xs text-avx-muted mt-1 truncate">${esc(s.url)}</p>`:''}</a>`).join('');}
+async function renderSupKnowledge(container){
+    container.innerHTML='<div class="flex items-center justify-center py-20"><i class="fa-solid fa-spinner fa-spin text-avx-accent text-2xl"></i></div>';
+    try{
+        const entries=await loadKB();
+        const categories=[...new Set(entries.map(e=>e.category).filter(Boolean))].sort();
+        container.innerHTML=`<div class="page-enter space-y-4"><div class="flex flex-wrap items-center justify-between gap-3"><h2 class="text-lg font-display font-semibold text-avx-text">Knowledge Base</h2><div class="flex items-center gap-2"><button onclick="document.getElementById('import-modal').classList.remove('hidden')" class="px-3 py-2 border border-avx-border text-avx-muted hover:text-avx-text hover:border-avx-text/30 rounded-lg text-sm transition-all"><i class="fa-solid fa-file-import mr-1.5"></i>Import</button><button onclick="openKbModal()" class="px-4 py-2 bg-avx-accent hover:bg-avx-accent-h text-white font-semibold rounded-lg text-sm transition-all btn-glow"><i class="fa-solid fa-plus mr-2"></i>Add Entry</button></div></div>
+        <div class="flex items-center gap-3"><div class="relative"><select id="kb-cat-filter" onchange="filterKbList()" class="kb-filter-select"><option value="">All Categories</option>${categories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}</select><i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-avx-muted text-[9px] pointer-events-none"></i></div><input id="kb-search" type="text" placeholder="Search entries..." oninput="filterKbList()" class="bg-avx-card border border-avx-border rounded-lg px-3 py-1.5 text-avx-text text-sm placeholder-avx-muted/40 flex-1 max-w-xs"><span class="text-xs text-avx-muted">${entries.length} entries</span></div>
+        <div id="kb-list" class="space-y-2"></div></div>`;
+        filterKbList();
+    }catch(e){container.innerHTML='<p class="text-avx-error text-sm">Failed to load knowledge base.</p>';}
+}
+
+function filterKbList(){
+    const catFilter=document.getElementById('kb-cat-filter')?.value||'';
+    const search=(document.getElementById('kb-search')?.value||'').toLowerCase();
+    const list=document.getElementById('kb-list');
+    if(!list||!kbCache)return;
+    let filtered=kbCache;
+    if(catFilter)filtered=filtered.filter(e=>e.category===catFilter);
+    if(search)filtered=filtered.filter(e=>(e.question||'').toLowerCase().includes(search)||(e.keywords||'').toLowerCase().includes(search)||(e.category||'').toLowerCase().includes(search)||(e.answer||'').toLowerCase().replace(/<[^>]+>/g,'').includes(search));
+    if(filtered.length===0){list.innerHTML='<p class="text-sm text-avx-muted text-center py-10">No entries match your filter.</p>';return;}
+    list.innerHTML=filtered.map(e=>{const plain=Paraphraser._html2txt(e.answer||'');const preview=plain.substring(0,100)+(plain.length>100?'...':'');return`<div class="bg-avx-surface border border-avx-border rounded-xl p-4 hover-card"><div class="flex items-start justify-between gap-3 mb-2"><div class="flex items-center gap-2 flex-wrap"><span class="kb-cat-tag bg-avx-accent/15 text-avx-accent">${esc(e.category||'uncategorized')}</span><span class="text-xs text-avx-muted">Priority: ${e.priority??5}</span></div><div class="flex gap-1 shrink-0"><button onclick="editKbEntry('${e.id}')" class="w-7 h-7 rounded-lg hover:bg-avx-card flex items-center justify-center text-avx-muted hover:text-avx-accent transition-all"><i class="fa-solid fa-pen text-[10px]"></i></button><button onclick="deleteKbEntry('${e.id}')" class="w-7 h-7 rounded-lg hover:bg-avx-card flex items-center justify-center text-avx-muted hover:text-avx-error transition-all"><i class="fa-solid fa-trash text-[10px]"></i></button></div></div><p class="text-sm font-medium text-avx-text mb-1">${esc(e.question||'No question')}</p><p class="text-xs text-avx-muted mb-2">${esc(e.keywords||'No keywords')}</p><div class="bg-avx-card/50 rounded-lg p-2.5"><p class="text-xs text-avx-muted leading-relaxed">${esc(preview)}</p></div></div>`;}).join('');
+}
+
+function openKbModal(entry=null){
+    document.getElementById('kb-edit-id').value=entry?.id||'';
+    document.getElementById('kb-cat').value=entry?.category||'';
+    document.getElementById('kb-keywords').value=entry?.keywords||'';
+    document.getElementById('kb-question').value=entry?.question||'';
+    document.getElementById('kb-priority').value=entry?.priority??5;
+    document.getElementById('kb-modal-title').textContent=entry?'Edit Knowledge Entry':'Add Knowledge';
+    initKbEditor(entry?.answer||'');
+    document.getElementById('kb-modal').classList.remove('hidden');
+}
+function closeKbModal(){document.getElementById('kb-modal').classList.add('hidden');if(kbQuillEditor){kbQuillEditor.off('text-change');kbQuillEditor=null;}}
+function editKbEntry(id){const entry=(kbCache||[]).find(e=>e.id===id);if(entry)openKbModal(entry);}
+async function saveKbEntry(){
+    const id=document.getElementById('kb-edit-id').value;
+    const category=document.getElementById('kb-cat').value.trim();
+    const keywords=document.getElementById('kb-keywords').value.trim();
+    const question=document.getElementById('kb-question').value.trim();
+    const answer=getKbEditorContent();
+    const priority=parseInt(document.getElementById('kb-priority').value)||5;
+    if(!question)return showToast('Question/trigger is required','warning');
+    if(!answer||answer==='<p><br></p>')return showToast('Please write an answer','warning');
+    try{if(id){await db.from('knowledge_base').update({category,keywords,question,answer,priority}).eq('id',id);showToast('Entry updated','success');}else{await db.from('knowledge_base').insert({category,keywords,question,answer,priority});showToast('Entry added','success');}closeKbModal();kbCache=null;switchSupView('knowledge');}catch(e){console.error('KB save error:',e);showToast('Failed to save entry','error');}
+}
+function deleteKbEntry(id){showConfirm('Delete Entry','Are you sure you want to delete this knowledge base entry?',async()=>{try{await db.from('knowledge_base').delete().eq('id',id);showToast('Entry deleted','success');kbCache=null;switchSupView('knowledge');}catch(e){showToast('Failed to delete','error');}});}
+
+async function importCSV(){
+    const csv=document.getElementById('import-csv').value.trim();
+    if(!csv)return showToast('Paste CSV content first','warning');
+    const lines=csv.split('\n').map(l=>l.trim()).filter(l=>l);
+    if(lines.length<2)return showToast('CSV needs a header row and at least one data row','warning');
+    const headers=lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,''));
+    const rows=[];
+    for(let i=1;i<lines.length;i++){
+        const vals=[];let current='',inQuote=false;
+        for(const ch of lines[i]){if(ch==='"')inQuote=!inQuote;else if(ch===','&&!inQuote){vals.push(current.trim());current='';}else current+=ch;}
+        vals.push(current.trim());
+        const obj={};headers.forEach((h,idx)=>{obj[h]=vals[idx]||'';});rows.push(obj);
+    }
+    try{
+        const inserts=rows.map(r=>({category:r.category||'',keywords:r.keywords||'',question:r.question||'',answer:r.answer||'',priority:parseInt(r.priority)||5}));
+        const{error}=await db.from('knowledge_base').insert(inserts);
+        if(error)throw error;
+        showToast(`${inserts.length} entries imported!`,'success');
+        document.getElementById('import-modal').classList.add('hidden');
+        document.getElementById('import-csv').value='';
+        kbCache=null;switchSupView('knowledge');
+    }catch(e){console.error('Import error:',e);showToast('Import failed: '+(e.message||'Unknown error'),'error');}
+}
 
 // ==============================================
-// 15. MOBILE SIDEBAR
+// 14. CONVERSATION MODAL
 // ==============================================
-function toggleSupSidebar(){document.getElementById('sup-sidebar').classList.toggle('open');}
+function openConvModal(sessionId,userId){
+    const modal=document.getElementById('conv-modal');
+    const meta=document.getElementById('conv-meta');
+    const msgContainer=document.getElementById('conv-messages');
+    const notesDiv=document.getElementById('conv-notes');
+    const notesText=document.getElementById('conv-notes-text');
+    const liveIndicator=document.getElementById('conv-live');
+    meta.textContent=getProfileName(userId)+' — Session '+sessionId.substring(0,8);
+    msgContainer.innerHTML='<div class="flex items-center justify-center py-10"><i class="fa-solid fa-spinner fa-spin text-avx-accent"></i></div>';
+    notesDiv.classList.add('hidden');liveIndicator.classList.add('hidden');
+    (async()=>{
+        try{
+            const{data}=await db.from('sessions').select('*').eq('id',sessionId).single();
+            if(!data||!data.conversation){msgContainer.innerHTML='<p class="text-sm text-avx-muted text-center">No conversation data found.</p>';return;}
+            const msgs=Array.isArray(data.conversation)?data.conversation:[];
+            msgContainer.innerHTML=msgs.map(m=>{if(m.role==='user')return`<div class="flex justify-end"><div class="max-w-[75%] bg-avx-accent/15 border border-avx-accent/25 rounded-2xl rounded-tr-md px-4 py-2.5"><p class="text-sm text-avx-text">${esc(m.text)}</p></div></div>`;return`<div class="flex justify-start"><div class="max-w-[75%] bg-avx-surface border border-avx-border rounded-2xl rounded-tl-md px-4 py-2.5"><p class="text-sm text-avx-text">${esc(m.text)}</p></div></div>`;}).join('');
+            if(data.notes){notesText.textContent=data.notes;notesDiv.classList.remove('hidden');}
+            if(data.status==='active'){liveIndicator.classList.remove('hidden');setupConvRealtime(sessionId);}
+        }catch(e){msgContainer.innerHTML='<p class="text-sm text-avx-error">Failed to load conversation.</p>';}
+    })();
+    modal.classList.remove('hidden');
+}
+function closeConvModal(){document.getElementById('conv-modal').classList.add('hidden');cleanupConvRealtime();}
+
+let convMsgSub=null;
+function setupConvRealtime(sessionId){
+    cleanupConvRealtime();if(!db)return;
+    convMsgSub=db.channel('conv-live-'+sessionId).on('postgres_changes',{event:'*',schema:'public',table:'sessions',filter:`id=eq.${sessionId}`},payload=>{
+        if(payload.new&&payload.new.conversation){
+            const msgs=Array.isArray(payload.new.conversation)?payload.new.conversation:[];
+            const msgContainer=document.getElementById('conv-messages');
+            const lastMsg=msgs[msgs.length-1];
+            if(lastMsg&&!S.convRenderedIds.has(msgs.length-1)){
+                S.convRenderedIds.add(msgs.length-1);
+                const isUser=lastMsg.role==='user';const div=document.createElement('div');div.className=`msg-enter flex ${isUser?'justify-end':'justify-start'}`;
+                div.innerHTML=isUser?`<div class="max-w-[75%] bg-avx-accent/15 border border-avx-accent/25 rounded-2xl rounded-tr-md px-4 py-2.5"><p class="text-sm text-avx-text">${esc(lastMsg.text)}</p></div>`:`<div class="max-w-[75%] bg-avx-surface border border-avx-border rounded-2xl rounded-tl-md px-4 py-2.5"><p class="text-sm text-avx-text">${esc(lastMsg.text)}</p></div>`;
+                msgContainer.appendChild(div);msgContainer.scrollTop=msgContainer.scrollHeight;
+            }
+            if(payload.new.status&&payload.new.status!=='active')document.getElementById('conv-live').classList.add('hidden');
+        }
+    }).subscribe();
+}
+function cleanupConvRealtime(){if(convMsgSub){convMsgSub.unsubscribe();convMsgSub=null;}}
 
 // ==============================================
-// 16. KEYBOARD SHORTCUTS
+// 15. QUICK LINKS
 // ==============================================
-document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='r'){e.preventDefault();manualRefresh();}if(e.key==='F5'){e.preventDefault();manualRefresh();}});
-</script>
+function toggleQuickLinks(){document.getElementById('quick-links-panel').classList.toggle('hidden');}
+async function loadQuickLinks(){
+    const siteFilter=document.getElementById('ql-site-filter')?.value||'';
+    const container=document.getElementById('ql-content');
+    if(!container)return;
+    container.innerHTML='<div class="flex items-center justify-center py-10"><i class="fa-solid fa-spinner fa-spin text-avx-accent text-sm"></i></div>';
+    try{
+        let query=db.from('quick_links').select('*').order('sort_order',{ascending:true});
+        if(siteFilter)query=query.eq('site_id',siteFilter);
+        const{data}=await query;const links=data||[];
+        if(links.length===0){container.innerHTML='<p class="text-sm text-avx-muted text-center py-10">No quick links found.</p>';return;}
+        container.innerHTML=links.map(l=>`<a href="${esc(l.url)}" target="_blank" class="block bg-avx-card border border-avx-border rounded-lg p-3 hover:border-avx-accent/30 transition-all hover:translate-y-[-1px]"><p class="text-sm font-medium text-avx-text mb-0.5">${esc(l.title)}</p>${l.description?`<p class="text-xs text-avx-muted">${esc(l.description)}</p>`:''}<p class="text-[10px] text-avx-accent mt-1 truncate">${esc(l.url)}</p></a>`).join('');
+    }catch(e){container.innerHTML='<p class="text-sm text-avx-error">Failed to load links.</p>';}
+}
+
+// ==============================================
+// 16. REALTIME CLEANUP
+// ==============================================
+function cleanupRealtime(){cleanupConvRealtime();if(msgChannel){msgChannel.unsubscribe();msgChannel=null;}if(convChannel){convChannel.unsubscribe();convChannel=null;}}
+
+// ==============================================
+// 17. INIT
+// ==============================================
+startClock();
+setInterval(updateClock,1000);
 
 <script>
 /**
@@ -1458,9 +1674,10 @@ document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='r'){
 })();
 
 </script>
-       <script>
+      <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/AVX-Tool-Hub-Assistant-Pro/sw.js');
   }
+
 </body>
 </html>
