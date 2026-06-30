@@ -804,58 +804,58 @@ function openKbModal(id,cat,kw,q,a,p){document.getElementById('kb-edit-id').valu
 function closeKbModal(){document.getElementById('kb-modal').classList.add('hidden');}
 
 async function saveKbEntry() {
-  const id = document.getElementById('kb-edit-id').value;
-  const cat = document.getElementById('kb-cat').value.trim();
-  const kw = document.getElementById('kb-keywords').value
-    .split(',')
-    .map(s => s.trim())
-    .filter(Boolean);
-  const q = document.getElementById('kb-question').value.trim();
-  const a = document.getElementById('kb-answer').value.trim();
-  const p = parseInt(document.getElementById('kb-priority').value, 10) || 5;
+    const id = document.getElementById('kb-edit-id').value.trim();
+    const cat = document.getElementById('kb-cat').value.trim();
+    const kw = document.getElementById('kb-keywords').value
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+    const q = document.getElementById('kb-question').value.trim();
+    const a = document.getElementById('kb-answer').value.trim();
+    const pRaw = document.getElementById('kb-priority').value;
+    const p = Number.isNaN(parseInt(pRaw, 10)) ? 5 : parseInt(pRaw, 10);
 
-  if (!cat) return showToast('Category is required', 'warning');
-  if (!kw.length) return showToast('At least one keyword is required', 'warning');
-  if (!q) return showToast('Question is required', 'warning');
-  if (!a) return showToast('Answer is required', 'warning');
+    if (!cat) return showToast('Category is required', 'warning');
+    if (!kw.length) return showToast('At least one keyword is required', 'warning');
+    if (!q) return showToast('Question is required', 'warning');
+    if (!a) return showToast('Answer is required', 'warning');
 
-  const payload = {
-    category: cat,
-    keywords: kw,
-    question: q,
-    answer: a,
-    priority: p,
-    active: true
-  };
+    const payload = {
+        category: cat,
+        keywords: kw,
+        question: q,
+        answer: a,
+        priority: p
+    };
 
-  try {
-    let error;
+    try {
+        let error = null;
 
-    if (id) {
-      ({ error } = await db
-        .from('knowledge_base')
-        .update(payload)
-        .eq('id', id));
-    } else {
-      ({ error } = await db
-        .from('knowledge_base')
-        .insert([payload]));
+        if (id) {
+            ({ error } = await db
+                .from('knowledge_base')
+                .update(payload)
+                .eq('id', id));
+        } else {
+            ({ error } = await db
+                .from('knowledge_base')
+                .insert([payload]));
+        }
+
+        if (error) throw error;
+
+        kbCache = null;
+        kbCacheTime = 0;
+        closeKbModal();
+        showToast('Knowledge entry saved', 'success');
+
+        if (S.supView === 'knowledge') {
+            await renderKnowledge(document.getElementById('sup-content'));
+        }
+    } catch (e) {
+        console.error('saveKbEntry failed:', e);
+        showToast('Failed to save knowledge entry: ' + e.message, 'error');
     }
-
-    if (error) throw error;
-
-    kbCache = null;
-    kbCacheTime = 0;
-    closeKbModal();
-    showToast('Knowledge entry saved', 'success');
-
-    if (S.supView === 'knowledge') {
-      renderKnowledge(document.getElementById('sup-content'));
-    }
-  } catch (e) {
-    console.error('saveKbEntry failed:', e);
-    showToast('Failed: ' + e.message, 'error');
-  }
 }
 
 async function deleteKbEntry(id){showConfirm('Delete entry?','This cannot be undone.',async()=>{try{await db.from('knowledge_base').update({active:false}).eq('id',id);kbCache=null;kbCacheTime=0;showToast('Entry deleted','success');if(S.supView==='knowledge')renderKnowledge(document.getElementById('sup-content'));}catch(e){showToast('Failed: '+e.message,'error');}});}
