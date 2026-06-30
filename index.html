@@ -798,6 +798,25 @@ function closeIncidentModal(){document.getElementById('incident-modal').classLis
 async function submitIncident(){const cat=document.getElementById('inc-category').value,desc=document.getElementById('inc-desc').value.trim();if(!desc)return showToast('Please describe the incident','warning');try{const{error}=await db.from('incidents').insert({user_id:S.profile.id,category:cat,description:desc});if(error)throw error;closeIncidentModal();showToast('Incident reported','success');}catch(e){showToast('Failed: '+e.message,'error');}}
 
 // ==============================================
+function editKbEntry(id) {
+    const entries = kbCache || [];
+    const entry = entries.find(e => e.id === id);
+
+    if (!entry) {
+        showToast('Entry not found', 'error');
+        return;
+    }
+
+    openKbModal(
+        entry.id,
+        entry.category || '',
+        entry.keywords || [],
+        entry.question || '',
+        entry.answer || '',
+        entry.priority ?? 5
+    );
+}
+
 // 12. KB MODAL
 // ==============================================
 function openKbModal(id, cat, kw, q, a, p) {
@@ -953,6 +972,7 @@ function openImportModal() {
     document.getElementById('import-csv').value = '';
     document.getElementById('import-modal').classList.remove('hidden');
 }
+
 
 // ==============================================
 // 13. SITE MODAL
