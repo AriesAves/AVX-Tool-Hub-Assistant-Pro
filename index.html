@@ -385,45 +385,15 @@ function getRowDate(row){
 // ==============================================
 // 3b. PROFILE NAME LOOKUP (no FK join needed)
 // ==============================================
-async function loadProfile(user){
+async function loadProfileNames(){
+    if(profileNameCache&&Date.now()-profileNameCacheTime<PROFILE_CACHE_TTL)return profileNameCache;
     try{
-        const{data:profile,error}=await db.from('profiles').select('*').eq('id',user.id).single();
-        if(error)throw error;
-        S.profile=profile;
-
-        await db.from('profiles').update({login_time:now(),logout_time:null}).eq('id',user.id);
-        S.profile.login_time=now();
-
-        try{
-            await db.rpc('log_activity',{p_action:'login',p_details:{role:profile.role}});
-        }catch(e){
-            console.warn('log_activity failed', e);
-        }
-
-        document.getElementById('auth-screen').classList.add('hidden');
-        startClock();
-
-        if(profile.role==='supervisor'){
-            document.getElementById('sup-screen').classList.remove('hidden');
-            document.getElementById('sup-welcome').textContent=`Welcome, ${profile.name}`;
-            await switchSupView('home');
-            await loadActiveCount();
-        }else{
-            document.getElementById('ct-screen').classList.remove('hidden');
-            document.getElementById('ct-welcome').textContent=`Welcome, ${profile.name}`;
-            document.getElementById('ct-role-label').textContent=cap(profile.role) + (profile.designation ? ' - ' + profile.designation : '');
-            await loadSitesDropdown();
-            await createNewSession();
-        }
-
-        showToast(`Signed in as ${cap(profile.role)}`,'success');
-    }catch(e){
-        console.error('Profile load error:',e);
-        showToast('Could not load profile: '+e.message,'error');
-        try{await db.auth.signOut();}catch(x){}
-    }
+        const{data}=await db.from('profiles').select('id,name');
+        profileNameCache={};(data||[]).forEach(p=>{if(p.id)profileNameCache[p.id]=p.name||'Unknown';});
+        profileNameCacheTime=Date.now();return profileNameCache;
+    }catch(e){return profileNameCache||{};}
 }
-
+function getProfileName(uid){return(profileNameCache||{})[uid]||'Unknown';}
 
 // ==============================================
 // 4. AUTH
@@ -441,11 +411,8 @@ async function handleSignup(){
 async function handleLogin(){
     const email=document.getElementById('li-email').value.trim(),pass=document.getElementById('li-pass').value;
     if(!email||!pass)return showToast('Please enter email and password','warning');
-    if(!db)return showToast('Database connection is not available','error');
     const btn=document.getElementById('li-btn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin mr-2"></i>Signing in...';
-    try{const{error}=await db.auth.signInWithPassword({email,password:pass});if(error)throw error;}
-    catch(e){console.error('Login failed:',e);showToast(e.message||'Login failed','error');}
-    finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>Sign In';}
+    try{const{error}=await db.auth.signInWithPassword({email,password:pass});if(error)throw error;}catch(e){showToast(e.message||'Login failed','error');}finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>Sign In';}
 }
 
 async function handleLogout(){
@@ -786,41 +753,13 @@ async function renderKnowledge(c){
                     <i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-avx-muted text-[9px] pointer-events-none"></i>
                 </div>
                 <button onclick="openImportModal()" class="text-xs px-3 py-1.5 rounded-lg bg-avx-info/10 text-avx-info border border-avx-info/20 hover:bg-avx-info/20 transition-all"><i class="fa-solid fa-file-import mr-1"></i>Import</button>
-                <button onclick="editKbEntry('${e.id}')" class="text-xs px-3 py-1.5 rounded-lg bg-avx-accent/10 text-avx-accent border border-avx-accent/20 hover:bg-avx-accent/20 transition-all"><i class="fa-solid fa-plus mr-1"></i>Add</button>
+                <button onclick="openKbModal()" class="text-xs px-3 py-1.5 rounded-lg bg-avx-accent/10 text-avx-accent border border-avx-accent/20 hover:bg-avx-accent/20 transition-all"><i class="fa-solid fa-plus mr-1"></i>Add</button>
             </div>
         </div>
-
-${!filtered.length ? `
-    <div class="text-center py-16 text-avx-muted">
-        <i class="fa-solid fa-filter text-2xl mb-3 block opacity-30"></i>
-        <p>No entries in this category.</p>
-    </div>
-` : `
-    <div class="space-y-2">
-        ${filtered.map(e => `
-            <div class="bg-avx-surface border border-avx-border rounded-xl p-4 hover-card">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center gap-2">
-                        <span class="kb-cat-tag bg-avx-accent/10 text-avx-accent">${esc(e.category || '')}</span>
-                        <span class="text-xs text-avx-muted">Priority: ${e.priority || 0}</span>
-                    </div>
-                    <div class="flex gap-1">
-                        <button onclick="editKbEntry('${e.id}')" class="w-7 h-7 rounded-lg hover:bg-avx-card flex items-center justify-center text-avx-muted hover:text-avx-accent transition-all text-xs">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button onclick="deleteKbEntry('${e.id}')" class="w-7 h-7 rounded-lg hover:bg-avx-error/10 flex items-center justify-center text-avx-muted hover:text-avx-error transition-all text-xs">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-                <p class="text-sm font-medium text-avx-text mb-1">${esc(e.question || '')}</p>
-                <p class="text-xs text-avx-muted line-clamp-2">${esc((e.answer || '').replace(/<[^>]*>/g, ''))}</p>
-                <p class="text-xs text-avx-muted/50 mt-2">Keywords: ${esc((e.keywords || []).join(', '))}</p>
-            </div>
-        `).join('')}
-    </div>
-`}
-
+        ${!filtered.length?'<div class="text-center py-16 text-avx-muted"><i class="fa-solid fa-filter text-2xl mb-3 block opacity-30"></i><p>No entries in this category.</p></div>':`
+        <div class="space-y-2">${filtered.map(e=>`<div class="bg-avx-surface border border-avx-border rounded-xl p-4 hover-card"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><span class="kb-cat-tag bg-avx-accent/10 text-avx-accent">${esc(e.category||'')}</span><span class="text-xs text-avx-muted">Priority: ${e.priority||0}</span></div><div class="flex gap-1"><button onclick="openKbModal('${e.id}','${esc(e.category||'')}','${esc((e.keywords||[]).join(','))}','${esc(e.question||'')}','${esc(e.answer||'').replace(/'/g,"\\'")}',${e.priority||0})" class="w-7 h-7 rounded-lg hover:bg-avx-card flex items-center justify-center text-avx-muted hover:text-avx-accent transition-all text-xs"><i class="fa-solid fa-pen"></i></button><button onclick="deleteKbEntry('${e.id}')" class="w-7 h-7 rounded-lg hover:bg-avx-error/10 flex items-center justify-center text-avx-muted hover:text-avx-error transition-all text-xs"><i class="fa-solid fa-trash"></i></button></div></div><p class="text-sm font-medium text-avx-text mb-1">${esc(e.question||'')}</p><p class="text-xs text-avx-muted line-clamp-2">${esc((e.answer||'').replace(/<[^>]*>/g,''))}</p><p class="text-xs text-avx-muted/50 mt-2">Keywords: ${esc((e.keywords||[]).join(', '))}</p></div>`).join('')}</div>`}`;
+    }catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><p>Error: ${esc(e.message)}</p></div>`;}
+}
 
 function filterKbByCategory(val){
     currentKbCategoryFilter=val;
@@ -859,181 +798,14 @@ function closeIncidentModal(){document.getElementById('incident-modal').classLis
 async function submitIncident(){const cat=document.getElementById('inc-category').value,desc=document.getElementById('inc-desc').value.trim();if(!desc)return showToast('Please describe the incident','warning');try{const{error}=await db.from('incidents').insert({user_id:S.profile.id,category:cat,description:desc});if(error)throw error;closeIncidentModal();showToast('Incident reported','success');}catch(e){showToast('Failed: '+e.message,'error');}}
 
 // ==============================================
-function editKbEntry(id) {
-    const entries = kbCache || [];
-    const entry = entries.find(e => e.id === id);
-
-    if (!entry) {
-        showToast('Entry not found', 'error');
-        return;
-    }
-
-    openKbModal(
-        entry.id,
-        entry.category || '',
-        entry.keywords || [],
-        entry.question || '',
-        entry.answer || '',
-        entry.priority ?? 5
-    );
-}
-
 // 12. KB MODAL
 // ==============================================
-function openKbModal(id, cat, kw, q, a, p) {
-    document.getElementById('kb-edit-id').value = id || '';
-    document.getElementById('kb-cat').value = cat || '';
-    document.getElementById('kb-keywords').value = Array.isArray(kw) ? kw.join(', ') : (kw || '');
-    document.getElementById('kb-question').value = q || '';
-    document.getElementById('kb-answer').value = a || '';
-    document.getElementById('kb-priority').value = p ?? 5;
-    document.getElementById('kb-modal-title').textContent = id ? 'Edit Knowledge' : 'Add Knowledge';
-    document.getElementById('kb-modal').classList.remove('hidden');
-}
-
-function closeKbModal() {
-    document.getElementById('kb-modal').classList.add('hidden');
-}
-
-async function saveKbEntry() {
-    const id = document.getElementById('kb-edit-id').value.trim();
-    const cat = document.getElementById('kb-cat').value.trim();
-    const kw = document.getElementById('kb-keywords').value
-        .split(',')
-        .map(s => s.trim())
-        .filter(Boolean);
-    const q = document.getElementById('kb-question').value.trim();
-    const a = document.getElementById('kb-answer').value.trim();
-    const pRaw = document.getElementById('kb-priority').value;
-    const p = Number.isNaN(parseInt(pRaw, 10)) ? 5 : parseInt(pRaw, 10);
-
-    if (!cat) return showToast('Category is required', 'warning');
-    if (!kw.length) return showToast('At least one keyword is required', 'warning');
-    if (!q) return showToast('Question is required', 'warning');
-    if (!a) return showToast('Answer is required', 'warning');
-
-    const payload = {
-        category: cat,
-        keywords: kw,
-        question: q,
-        answer: a,
-        priority: p
-    };
-
-    try {
-        let error = null;
-
-        if (id) {
-            ({ error } = await db
-                .from('knowledge_base')
-                .update(payload)
-                .eq('id', id));
-        } else {
-            ({ error } = await db
-                .from('knowledge_base')
-                .insert([payload]));
-        }
-
-        if (error) throw error;
-
-        kbCache = null;
-        kbCacheTime = 0;
-        closeKbModal();
-        showToast('Knowledge entry saved', 'success');
-
-        if (S.supView === 'knowledge') {
-            await renderKnowledge(document.getElementById('sup-content'));
-        }
-    } catch (e) {
-        console.error('saveKbEntry failed:', e);
-        showToast('Failed to save knowledge entry: ' + e.message, 'error');
-    }
-}
-
-async function deleteKbEntry(id) {
-    showConfirm('Delete entry?', 'This cannot be undone.', async () => {
-        try {
-            const { error } = await db
-                .from('knowledge_base')
-                .update({ active: false })
-                .eq('id', id);
-
-            if (error) throw error;
-
-            kbCache = null;
-            kbCacheTime = 0;
-            showToast('Entry deleted', 'success');
-
-            if (S.supView === 'knowledge') {
-                renderKnowledge(document.getElementById('sup-content'));
-            }
-        } catch (e) {
-            showToast('Failed: ' + e.message, 'error');
-        }
-    });
-}
-
-async function importCSV() {
-    const raw = document.getElementById('import-csv').value.trim();
-    if (!raw) return showToast('Paste CSV content first', 'warning');
-
-    const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
-    if (lines.length < 2) return showToast('CSV needs a header row + data', 'warning');
-
-    const header = lines[0].split(',').map(s => s.trim().replace(/^"|"$/g, ''));
-
-    const rows = lines.slice(1).map(l => {
-        const vals = [];
-        let cur = '', inQ = false;
-
-        for (const ch of l) {
-            if (ch === '"') {
-                inQ = !inQ;
-            } else if (ch === ',' && !inQ) {
-                vals.push(cur.trim());
-                cur = '';
-            } else {
-                cur += ch;
-            }
-        }
-
-        vals.push(cur.trim());
-        return vals;
-    });
-
-    const entries = rows.map(r => ({
-        category: r[header.indexOf('category')] || '',
-        keywords: (r[header.indexOf('keywords')] || '')
-            .split(',')
-            .map(s => s.trim())
-            .filter(Boolean),
-        question: r[header.indexOf('question')] || '',
-        answer: r[header.indexOf('answer')] || '',
-        priority: parseInt(r[header.indexOf('priority')], 10) || 5
-    }));
-
-    try {
-        const { error } = await db.from('knowledge_base').insert(entries);
-        if (error) throw error;
-
-        kbCache = null;
-        kbCacheTime = 0;
-        document.getElementById('import-modal').classList.add('hidden');
-        showToast(`${entries.length} entries imported`, 'success');
-
-        if (S.supView === 'knowledge') {
-            renderKnowledge(document.getElementById('sup-content'));
-        }
-    } catch (e) {
-        showToast('Import failed: ' + e.message, 'error');
-    }
-}
-
-function openImportModal() {
-    document.getElementById('import-csv').value = '';
-    document.getElementById('import-modal').classList.remove('hidden');
-}
-
+function openKbModal(id,cat,kw,q,a,p){document.getElementById('kb-edit-id').value=id||'';document.getElementById('kb-cat').value=cat||'';document.getElementById('kb-keywords').value=kw||'';document.getElementById('kb-question').value=q||'';document.getElementById('kb-answer').value=a||'';document.getElementById('kb-priority').value=p||5;document.getElementById('kb-modal-title').textContent=id?'Edit Knowledge':'Add Knowledge';document.getElementById('kb-modal').classList.remove('hidden');}
+function closeKbModal(){document.getElementById('kb-modal').classList.add('hidden');}
+async function saveKbEntry(){const id=document.getElementById('kb-edit-id').value,cat=document.getElementById('kb-cat').value.trim(),kw=document.getElementById('kb-keywords').value.split(',').map(s=>s.trim()).filter(Boolean),q=document.getElementById('kb-question').value.trim(),a=document.getElementById('kb-answer').value.trim(),p=parseInt(document.getElementById('kb-priority').value)||5;if(!q||!a)return showToast('Question and answer are required','warning');try{if(id){const{error}=await db.from('knowledge_base').update({category:cat,keywords:kw,question:q,answer:a,priority:p}).eq('id',id);if(error)throw error;}else{const{error}=await db.from('knowledge_base').insert({category:cat,keywords:kw,question:q,answer:a,priority:p});if(error)throw error;}kbCache=null;kbCacheTime=0;closeKbModal();showToast('Knowledge entry saved','success');if(S.supView==='knowledge')renderKnowledge(document.getElementById('sup-content'));}catch(e){showToast('Failed: '+e.message,'error');}}
+async function deleteKbEntry(id){showConfirm('Delete entry?','This cannot be undone.',async()=>{try{await db.from('knowledge_base').update({active:false}).eq('id',id);kbCache=null;kbCacheTime=0;showToast('Entry deleted','success');if(S.supView==='knowledge')renderKnowledge(document.getElementById('sup-content'));}catch(e){showToast('Failed: '+e.message,'error');}});}
+async function importCSV(){const raw=document.getElementById('import-csv').value.trim();if(!raw)return showToast('Paste CSV content first','warning');const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);if(lines.length<2)return showToast('CSV needs a header row + data','warning');const header=lines[0].split(',').map(s=>s.trim().replace(/^"|"$/g,''));const rows=lines.slice(1).map(l=>{const vals=[];let cur='',inQ=false;for(const ch of l){if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}else{cur+=ch;}}vals.push(cur.trim());return vals;});const entries=rows.map(r=>({category:r[header.indexOf('category')]||'',keywords:(r[header.indexOf('keywords')]||'').split(',').map(s=>s.trim()).filter(Boolean),question:r[header.indexOf('question')]||'',answer:r[header.indexOf('answer')]||'',priority:parseInt(r[header.indexOf('priority')])||5}));try{const{error}=await db.from('knowledge_base').insert(entries);if(error)throw error;kbCache=null;kbCacheTime=0;document.getElementById('import-modal').classList.add('hidden');showToast(`${entries.length} entries imported`,'success');if(S.supView==='knowledge')renderKnowledge(document.getElementById('sup-content'));}catch(e){showToast('Import failed: '+e.message,'error');}}
+function openImportModal(){document.getElementById('import-csv').value='';document.getElementById('import-modal').classList.remove('hidden');}
 
 // ==============================================
 // 13. SITE MODAL
