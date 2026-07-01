@@ -385,15 +385,45 @@ function getRowDate(row){
 // ==============================================
 // 3b. PROFILE NAME LOOKUP (no FK join needed)
 // ==============================================
-async function loadProfileNames(){
-    if(profileNameCache&&Date.now()-profileNameCacheTime<PROFILE_CACHE_TTL)return profileNameCache;
+async function loadProfile(user){
     try{
-        const{data}=await db.from('profiles').select('id,name');
-        profileNameCache={};(data||[]).forEach(p=>{if(p.id)profileNameCache[p.id]=p.name||'Unknown';});
-        profileNameCacheTime=Date.now();return profileNameCache;
-    }catch(e){return profileNameCache||{};}
+        const{data:profile,error}=await db.from('profiles').select('*').eq('id',user.id).single();
+        if(error)throw error;
+        S.profile=profile;
+
+        await db.from('profiles').update({login_time:now(),logout_time:null}).eq('id',user.id);
+        S.profile.login_time=now();
+
+        try{
+            await db.rpc('log_activity',{p_action:'login',p_details:{role:profile.role}});
+        }catch(e){
+            console.warn('log_activity failed', e);
+        }
+
+        document.getElementById('auth-screen').classList.add('hidden');
+        startClock();
+
+        if(profile.role==='supervisor'){
+            document.getElementById('sup-screen').classList.remove('hidden');
+            document.getElementById('sup-welcome').textContent=`Welcome, ${profile.name}`;
+            await switchSupView('home');
+            await loadActiveCount();
+        }else{
+            document.getElementById('ct-screen').classList.remove('hidden');
+            document.getElementById('ct-welcome').textContent=`Welcome, ${profile.name}`;
+            document.getElementById('ct-role-label').textContent=cap(profile.role) + (profile.designation ? ' - ' + profile.designation : '');
+            await loadSitesDropdown();
+            await createNewSession();
+        }
+
+        showToast(`Signed in as ${cap(profile.role)}`,'success');
+    }catch(e){
+        console.error('Profile load error:',e);
+        showToast('Could not load profile: '+e.message,'error');
+        try{await db.auth.signOut();}catch(x){}
+    }
 }
-function getProfileName(uid){return(profileNameCache||{})[uid]||'Unknown';}
+
 
 // ==============================================
 // 4. AUTH
@@ -411,8 +441,11 @@ async function handleSignup(){
 async function handleLogin(){
     const email=document.getElementById('li-email').value.trim(),pass=document.getElementById('li-pass').value;
     if(!email||!pass)return showToast('Please enter email and password','warning');
+    if(!db)return showToast('Database connection is not available','error');
     const btn=document.getElementById('li-btn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin mr-2"></i>Signing in...';
-    try{const{error}=await db.auth.signInWithPassword({email,password:pass});if(error)throw error;}catch(e){showToast(e.message||'Login failed','error');}finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>Sign In';}
+    try{const{error}=await db.auth.signInWithPassword({email,password:pass});if(error)throw error;}
+    catch(e){console.error('Login failed:',e);showToast(e.message||'Login failed','error');}
+    finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>Sign In';}
 }
 
 async function handleLogout(){
@@ -753,7 +786,7 @@ async function renderKnowledge(c){
                     <i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-avx-muted text-[9px] pointer-events-none"></i>
                 </div>
                 <button onclick="openImportModal()" class="text-xs px-3 py-1.5 rounded-lg bg-avx-info/10 text-avx-info border border-avx-info/20 hover:bg-avx-info/20 transition-all"><i class="fa-solid fa-file-import mr-1"></i>Import</button>
-                <button onclick="openKbModal()" class="text-xs px-3 py-1.5 rounded-lg bg-avx-accent/10 text-avx-accent border border-avx-accent/20 hover:bg-avx-accent/20 transition-all"><i class="fa-solid fa-plus mr-1"></i>Add</button>
+                <button onclick="editKbEntry('${e.id}')" class="text-xs px-3 py-1.5 rounded-lg bg-avx-accent/10 text-avx-accent border border-avx-accent/20 hover:bg-avx-accent/20 transition-all"><i class="fa-solid fa-plus mr-1"></i>Add</button>
             </div>
         </div>
 
@@ -787,6 +820,7 @@ ${!filtered.length ? `
         `).join('')}
     </div>
 `}
+
 
 function filterKbByCategory(val){
     currentKbCategoryFilter=val;
