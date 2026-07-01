@@ -756,10 +756,37 @@ async function renderKnowledge(c){
                 <button onclick="openKbModal()" class="text-xs px-3 py-1.5 rounded-lg bg-avx-accent/10 text-avx-accent border border-avx-accent/20 hover:bg-avx-accent/20 transition-all"><i class="fa-solid fa-plus mr-1"></i>Add</button>
             </div>
         </div>
-        ${!filtered.length?'<div class="text-center py-16 text-avx-muted"><i class="fa-solid fa-filter text-2xl mb-3 block opacity-30"></i><p>No entries in this category.</p></div>':`
-        <div class="space-y-2">${filtered.map(e=>`<div class="bg-avx-surface border border-avx-border rounded-xl p-4 hover-card"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><span class="kb-cat-tag bg-avx-accent/10 text-avx-accent">${esc(e.category||'')}</span><span class="text-xs text-avx-muted">Priority: ${e.priority||0}</span></div><div class="flex gap-1"><button onclick="openKbModal('${e.id}','${esc(e.category||'')}','${esc((e.keywords||[]).join(','))}','${esc(e.question||'')}','${esc(e.answer||'').replace(/'/g,"\\'")}',${e.priority||0})" class="w-7 h-7 rounded-lg hover:bg-avx-card flex items-center justify-center text-avx-muted hover:text-avx-accent transition-all text-xs"><i class="fa-solid fa-pen"></i></button><button onclick="deleteKbEntry('${e.id}')" class="w-7 h-7 rounded-lg hover:bg-avx-error/10 flex items-center justify-center text-avx-muted hover:text-avx-error transition-all text-xs"><i class="fa-solid fa-trash"></i></button></div></div><p class="text-sm font-medium text-avx-text mb-1">${esc(e.question||'')}</p><p class="text-xs text-avx-muted line-clamp-2">${esc((e.answer||'').replace(/<[^>]*>/g,''))}</p><p class="text-xs text-avx-muted/50 mt-2">Keywords: ${esc((e.keywords||[]).join(', '))}</p></div>`).join('')}</div>`}`;
-    }catch(e){c.innerHTML=`<div class="text-center py-20 text-avx-error"><p>Error: ${esc(e.message)}</p></div>`;}
-}
+
+${!filtered.length ? `
+    <div class="text-center py-16 text-avx-muted">
+        <i class="fa-solid fa-filter text-2xl mb-3 block opacity-30"></i>
+        <p>No entries in this category.</p>
+    </div>
+` : `
+    <div class="space-y-2">
+        ${filtered.map(e => `
+            <div class="bg-avx-surface border border-avx-border rounded-xl p-4 hover-card">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="kb-cat-tag bg-avx-accent/10 text-avx-accent">${esc(e.category || '')}</span>
+                        <span class="text-xs text-avx-muted">Priority: ${e.priority || 0}</span>
+                    </div>
+                    <div class="flex gap-1">
+                        <button onclick="editKbEntry('${e.id}')" class="w-7 h-7 rounded-lg hover:bg-avx-card flex items-center justify-center text-avx-muted hover:text-avx-accent transition-all text-xs">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="deleteKbEntry('${e.id}')" class="w-7 h-7 rounded-lg hover:bg-avx-error/10 flex items-center justify-center text-avx-muted hover:text-avx-error transition-all text-xs">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <p class="text-sm font-medium text-avx-text mb-1">${esc(e.question || '')}</p>
+                <p class="text-xs text-avx-muted line-clamp-2">${esc((e.answer || '').replace(/<[^>]*>/g, ''))}</p>
+                <p class="text-xs text-avx-muted/50 mt-2">Keywords: ${esc((e.keywords || []).join(', '))}</p>
+            </div>
+        `).join('')}
+    </div>
+`}
 
 function filterKbByCategory(val){
     currentKbCategoryFilter=val;
